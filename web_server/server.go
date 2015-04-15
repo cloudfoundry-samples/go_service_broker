@@ -11,15 +11,23 @@ import (
 )
 
 type Server struct {
+	controller *Controller
+}
+
+func CreateServer() *Server {
+	return &Server{
+		controller: &Controller{},
+	}
 }
 
 func (s *Server) Start() {
-	http.HandleFunc("/", s.catalog)
+	router := mux.NewRouter()
+	router.HandleFunc("/v2/catalog", s.controller.Catalog)
+	http.Handle("/", router)
 	http.ListenAndServe(":8001", nil)
 }
 
 func (s *Server) catalog(w http.ResponseWriter, r *http.Request) {
-	mux.NewRouter()
 
 	catalog := m.Catalog{}
 
