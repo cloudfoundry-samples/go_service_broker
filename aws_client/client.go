@@ -1,87 +1,43 @@
 package aws_client
 
 import (
-	"fmt"
-
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/aws/awsutil"
 	"github.com/awslabs/aws-sdk-go/service/ec2"
 )
 
 type Client interface {
-	CreateInstance(imageId string) error
+	CreateInstance(imageId string) (string, error)
+	CreateKeyPair(keyName string) (string, error)
 }
 
 type AWSClient struct {
-	Region string
+	EC2Client *ec2.EC2
 }
 
 func NewClient(region string) *AWSClient {
 	return &AWSClient{
-		Region: region,
+		EC2Client: ec2.New(&aws.Config{Region: region}),
 	}
 }
 
-func (c *AWSClient) CreateInstance() error {
-	fmt.Println("creating instance...")
+func (c *AWSClient) CreateInstance() (string, error) {
 	return c.createInstance("ami-80280ee8")
 }
 
-func (c *AWSClient) createInstance(imageId string) error {
-	// Create an EC2 service object in the "us-west-2" region
-	// Note that you can also configure your region globally by
-	// exporting the AWS_REGION environment variable
-	svc := ec2.New(&aws.Config{Region: c.Region})
-	fmt.Println("EC2 service initialized!")
+func (c *AWSClient) CreateKeyPair(keyName string) (string, error) {
+	keypairInput := &ec2.CreateKeyPairInput{
+		KeyName: aws.String(keyName),
+	}
 
-	// Call the DescribeInstances Operation
-	// resp, err := svc.DescribeInstances(nil)
-	// fmt.Println("resp:", resp)
-	// if err != nil {
-	// 	fmt.Println("err:", err)
-	// 	panic(err)
-	// }
+	keypairOutput, err := c.EC2Client.CreateKeyPair(keypairInput)
+	if err != nil {
+		return "", err
+	}
+	return awsutil.StringValue(keypairOutput), nil
+}
 
-	// // resp has all of the response data, pull out instance IDs:
-	// fmt.Println("> Number of reservation sets: ", len(resp.Reservations))
-	// for idx, res := range resp.Reservations {
-	// 	fmt.Println("  > Number of instances: ", len(res.Instances))
-	// 	for _, inst := range resp.Reservations[idx].Instances {
-	// 		fmt.Println("    - Instance ID: ", *inst.InstanceID)
-	// 	}
-	// }
-
-	// input := &ec2.DescribeImagesInput{
-	// 	// DryRun: aws.Boolean(true),
-	// 	// ImageIDs: []*string{
-	// 	// 	aws.String("ami-01da0968"),
-	// 	// },
-	// 	Filters: []*ec2.Filter{
-	// 		&ec2.Filter{
-	// 			Name: aws.String("image-id"),
-	// 			Values: []*string{
-	// 				aws.String(imageId),
-	// 			},
-	// 		},
-	// 		// &ec2.Filter{
-	// 		// 	Name: aws.String("is-public"),
-	// 		// 	Values: []*string{
-	// 		// 		aws.String("true"),
-	// 		// 	},
-	// 		// },
-	// 	},
-	// }
-
-	// // output := &ec2.DescribeImagesOutput{}
-	// fmt.Println("Describing images...")
-	// output, err := svc.DescribeImages(input)
-	// if err != nil {
-	// 	fmt.Println("err:", err)
-	// 	panic(err)
-	// }
-
-	// fmt.Println(awsutil.StringValue(output))
-
+func (c *AWSClient) createInstance(imageId string) (string, error) {
 	instanceInput := &ec2.RunInstancesInput{
 		ImageID:  aws.String(imageId), // Required
 		MaxCount: aws.Long(1),         // Required
@@ -161,17 +117,11 @@ func (c *AWSClient) createInstance(imageId string) error {
 		UserData: aws.String("service async key demo"),
 	}
 
-	instancOutput, err := svc.RunInstances(instanceInput)
+	instancOutput, err := c.EC2Client.RunInstances(instanceInput)
 
-	if awserr := aws.Error(err); awserr != nil {
-		// A service error occurred.
-		fmt.Println("Error:", awserr.Code, awserr.Message)
-	} else if err != nil {
-		// A non-service error occurred.
-		panic(err)
+	if err != nil {
+		return "", err
 	}
 
-	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(instancOutput))
-	return nil
+	return awsutil.StringValue(instancOutput), nil
 }
