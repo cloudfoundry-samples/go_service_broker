@@ -1,13 +1,24 @@
 package aws_client
 
 import (
+	"strconv"
+
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/aws/awsutil"
 	"github.com/awslabs/aws-sdk-go/service/ec2"
 )
 
+const (
+	AMI_ID            = "ami-80280ee8"
+	SECURITY_GROUP_ID = "sg-b23aead6"
+	SUBNET_ID         = "subnet-0c75a427"
+	KEY_NAME          = "mykey1"
+	INSTANCE_TYPE     = "t2.micro"
+)
+
 type Client interface {
 	CreateInstance(imageId string) (string, error)
+	GetInstanceState(instancId string) (string, error)
 	CreateKeyPair(keyName string) (string, error)
 }
 
@@ -22,7 +33,23 @@ func NewClient(region string) *AWSClient {
 }
 
 func (c *AWSClient) CreateInstance() (string, error) {
-	return c.createInstance("ami-80280ee8")
+	return c.createInstance(AMI_ID)
+}
+
+func (c *AWSClient) GetInstanceState(instanceId string) (string, error) {
+	instanceInput := &ec2.DescribeInstancesInput{
+		InstanceIDs: []*string{
+			aws.String(instanceId), // Required
+		},
+	}
+
+	instanceOutput, err := c.EC2Client.DescribeInstances(instanceInput)
+	if err != nil {
+		return "", err
+	}
+
+	state, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Reservations[0].Instances[0].State.Name))
+	return state, nil
 }
 
 func (c *AWSClient) CreateKeyPair(keyName string) (string, error) {
@@ -68,9 +95,9 @@ func (c *AWSClient) createInstance(imageId string) (string, error) {
 		// 	Name: aws.String("String"),
 		// },
 		// InstanceInitiatedShutdownBehavior: aws.String("ShutdownBehavior"),
-		InstanceType: aws.String("t2.micro"),
+		InstanceType: aws.String(INSTANCE_TYPE),
 		// KernelID:                          aws.String("String"),
-		// KeyName:                           aws.String("String"),
+		KeyName: aws.String(KEY_NAME),
 		// Monitoring: &ec2.RunInstancesMonitoringEnabled{
 		// 	Enabled: aws.Boolean(true), // Required
 		// },
@@ -106,22 +133,18 @@ func (c *AWSClient) createInstance(imageId string) (string, error) {
 		// PrivateIPAddress: aws.String("String"),
 		// RAMDiskID:        aws.String("String"),
 		SecurityGroupIDs: []*string{
-			aws.String("sg-b23aead6"), // Required
+			aws.String(SECURITY_GROUP_ID), // Required
 			// More values...
 		},
-		// SecurityGroups: []*string{
-		// 	aws.String("default"), // Required
-		// 	// More values...
-		// },
-		SubnetID: aws.String("subnet-0c75a427"),
-		UserData: aws.String("service async key demo"),
+		SubnetID: aws.String(SUBNET_ID),
 	}
 
 	instancOutput, err := c.EC2Client.RunInstances(instanceInput)
-
 	if err != nil {
 		return "", err
 	}
 
-	return awsutil.StringValue(instancOutput), nil
+	instanceId, _ := strconv.Unquote(awsutil.StringValue(instancOutput.Instances[0].InstanceID))
+
+	return instanceId, nil
 }
