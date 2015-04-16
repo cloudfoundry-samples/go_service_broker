@@ -6,6 +6,11 @@
 	],
 	"Deps": [
 		{
+			"ImportPath": "code.google.com/p/go.crypto/ssh",
+			"Comment": "null-223",
+			"Rev": "31393df5baea9ed8d6778396e7f3896070ea5c04"
+		},
+		{
 			"ImportPath": "github.com/awslabs/aws-sdk-go/aws",
 			"Rev": "2014967b5c74e59ec22d7e99e7bf32a4b1935ed6"
 		},
