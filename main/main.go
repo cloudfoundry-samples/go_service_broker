@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"time"
+	//"time"
 
 	aws "github.com/awslabs/aws-sdk-go/aws"
 	ac "github.com/xingzhou/go_service_broker/aws_client"
@@ -14,17 +14,22 @@ func main() {
 
 	client := ac.NewClient("us-east-1")
 
-	instanceId, err := client.CreateInstance()
-	//instanceId := "i-f1a89926"
-	handleAWSError("CreateInstance", instanceId, err)
-	for {
-		state, err := client.GetInstanceState(instanceId)
-		handleAWSError("GetInstanceStatus", state, err)
-		if state == "running" {
-			break
-		}
-		time.Sleep(time.Duration(1) * time.Second)
-	}
+	// instanceId, err := client.CreateInstance()
+	// handleAWSError("CreateInstance", instanceId, err)
+	instanceId := "i-e3e0de34"
+	privateKey, err := client.InjectKeyPair(instanceId)
+	handleAWSError("InjectKeyPair", privateKey, err)
+	// handleAWSError("CreateKeyPair", publicKey, err)
+
+	// handleAWSError("CreateInstance", instanceId, err)
+	// for {
+	// 	state, err := client.GetInstanceState(instanceId)
+	// 	handleAWSError("GetInstanceStatus", state, err)
+	// 	if state == "running" {
+	// 		break
+	// 	}
+	// 	time.Sleep(time.Duration(1) * time.Second)
+	// }
 
 	// output, err := client.CreateKeyPair("mykey1")
 	// handleAWSError("CreateKeyPair", output, err)

@@ -1,11 +1,14 @@
 package aws_client
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/aws/awsutil"
 	"github.com/awslabs/aws-sdk-go/service/ec2"
+
+	"github.com/xingzhou/go_service_broker/utils"
 )
 
 const (
@@ -14,12 +17,15 @@ const (
 	SUBNET_ID         = "subnet-0c75a427"
 	KEY_NAME          = "mykey1"
 	INSTANCE_TYPE     = "t2.micro"
+	LINUX_USER        = "ubuntu"
+	PRIVATE_KEY_PATH  = "/Users/huazhang/.ssh/id_rsa"
 )
 
 type Client interface {
 	CreateInstance(imageId string) (string, error)
-	GetInstanceState(instancId string) (string, error)
+	GetInstanceState(instanceId string) (string, error)
 	CreateKeyPair(keyName string) (string, error)
+	InjectKeyPair(instanceId string) (string, error)
 }
 
 type AWSClient struct {
@@ -62,6 +68,42 @@ func (c *AWSClient) CreateKeyPair(keyName string) (string, error) {
 		return "", err
 	}
 	return awsutil.StringValue(keypairOutput), nil
+}
+
+func (c *AWSClient) InjectKeyPair(instanceId string) (string, error) {
+	instanceInput := &ec2.DescribeInstancesInput{
+		InstanceIDs: []*string{
+			aws.String(instanceId), // Required
+		},
+	}
+
+	instanceOutput, err := c.EC2Client.DescribeInstances(instanceInput)
+	if err != nil {
+		return "", err
+	}
+
+	ip, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Reservations[0].Instances[0].PublicIPAddress))
+	pemBytes, err := utils.ReadFile(PRIVATE_KEY_PATH)
+	if err != nil {
+		return "", err
+	}
+
+	awsSShClient, err := utils.GetSshClient(LINUX_USER, pemBytes, ip)
+	if err != nil {
+		return "", err
+	}
+
+	command := `rm -f ./broker_id_rsa ./broker_id_rsa.pub
+	ssh-keygen -q -t rsa -N ""  -f ./broker_id_rsa
+	cat ./broker_id_rsa.pub >> .ssh/authorized_keys
+	cat ./broker_id_rsa
+	`
+	privateKey, err := awsSShClient.ExecCommand(command)
+	if err != nil {
+		return "", err
+	}
+
+	return privateKey, nil
 }
 
 func (c *AWSClient) createInstance(imageId string) (string, error) {
@@ -139,12 +181,13 @@ func (c *AWSClient) createInstance(imageId string) (string, error) {
 		SubnetID: aws.String(SUBNET_ID),
 	}
 
-	instancOutput, err := c.EC2Client.RunInstances(instanceInput)
+	instanceOutput, err := c.EC2Client.RunInstances(instanceInput)
 	if err != nil {
 		return "", err
 	}
 
-	instanceId, _ := strconv.Unquote(awsutil.StringValue(instancOutput.Instances[0].InstanceID))
+	fmt.Println(awsutil.StringValue(instanceOutput))
+	instanceId, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Instances[0].InstanceID))
 
 	return instanceId, nil
 }
