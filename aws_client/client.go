@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	AMI_ID            = "ami-80280ee8"
+	AMI_ID            = "ami-dc5e75b4" //"ami-ecb68a84"
 	SECURITY_GROUP_ID = "sg-b23aead6"
 	SUBNET_ID         = "subnet-0c75a427"
 	KEY_NAME          = "mykey1"
