@@ -22,7 +22,7 @@ const (
 )
 
 type Client interface {
-	CreateInstance(imageId string) (string, error)
+	CreateInstance() (string, error)
 	GetInstanceState(instanceId string) (string, error)
 	CreateKeyPair(keyName string) (string, error)
 	InjectKeyPair(instanceId string) (string, error)

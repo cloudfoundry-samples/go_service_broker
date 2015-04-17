@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/xingzhou/go_service_broker/module"
 )
 
 type Server struct {
@@ -12,7 +13,9 @@ type Server struct {
 
 func CreateServer() *Server {
 	return &Server{
-		controller: &Controller{},
+		controller: &Controller{
+			InstanceMap: make(map[string]module.ServiceInstance),
+		},
 	}
 }
 
@@ -20,6 +23,7 @@ func (s *Server) Start() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/v2/catalog", s.controller.Catalog).Methods("GET")
+	router.HandleFunc("/v2/service_instances/{service_instance_guid}", s.controller.GetServiceInstance).Methods("GET")
 	router.HandleFunc("/v2/service_instances/{service_instance_guid}", s.controller.CreateServiceInstance).Methods("PUT")
 	router.HandleFunc("/v2/service_instances/{service_instance_guid}", s.controller.RemoveServiceInstance).Methods("DELETE")
 	router.HandleFunc("/v2/service_instances/{service_instance_guid}/service_bindings/{service_binding_guid}", s.controller.Bind).Methods("PUT")
