@@ -14,7 +14,7 @@ type Server struct {
 func CreateServer() *Server {
 	return &Server{
 		controller: &Controller{
-			InstanceMap: make(map[string]module.ServiceInstance),
+			InstanceMap: make(map[string]*module.ServiceInstance),
 		},
 	}
 }
