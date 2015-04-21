@@ -19,6 +19,7 @@ const (
 
 type Controller struct {
 	InstanceMap map[string]*module.ServiceInstance
+	KeyMap      map[string]*module.ServiceKey
 }
 
 func (c *Controller) Catalog(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +79,7 @@ func (c *Controller) CreateServiceInstance(w http.ResponseWriter, r *http.Reques
 
 	c.InstanceMap[instance.Id] = &instance
 
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	response := module.CreateServiceInstanceResponse{
 		DashboardUrl:  "http://dashbaord_url",
 		LastOperation: &lastOperation,
@@ -130,7 +131,40 @@ func (c *Controller) RemoveServiceInstance(w http.ResponseWriter, r *http.Reques
 }
 
 func (c *Controller) Bind(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	serviceInstanceGuid := vars["service_id"]
+	instance := c.InstanceMap[serviceInstanceGuid]
 
+	if instance == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	awsClient := ac.NewClient("us-east-1")
+	state, err := awsClient.GetInstanceState(instance.InternalId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if state == "pending" {
+		instance.LastOperation.State = "in progress"
+		instance.LastOperation.Description = "creating service instance..."
+	} else if state == "running" {
+		instance.LastOperation.State = "succeeded"
+		instance.LastOperation.Description = "successfully created service instance"
+	} else {
+		instance.LastOperation.State = "failed"
+		instance.LastOperation.Description = "failed to create service instance"
+	}
+
+	w.WriteHeader(http.StatusOK)
+	response := module.CreateServiceInstanceResponse{
+		DashboardUrl:  "http://dashbaord_url",
+		LastOperation: instance.LastOperation,
+	}
+
+	data, _ := json.Marshal(response)
+	fmt.Fprintf(w, string(data))
 }
 
 func (c *Controller) UnBind(w http.ResponseWriter, r *http.Request) {

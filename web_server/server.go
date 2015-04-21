@@ -15,6 +15,7 @@ func CreateServer() *Server {
 	return &Server{
 		controller: &Controller{
 			InstanceMap: make(map[string]*module.ServiceInstance),
+			KeyMap:      make(map[string]*module.ServiceKey),
 		},
 	}
 }
