@@ -132,38 +132,33 @@ func (c *Controller) RemoveServiceInstance(w http.ResponseWriter, r *http.Reques
 
 func (c *Controller) Bind(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	serviceInstanceGuid := vars["service_id"]
+	serviceInstanceGuid := vars["service_instance_guid"]
+	// keyId := vars["binding_id"]
 	instance := c.InstanceMap[serviceInstanceGuid]
-
+	fmt.Println("*****", instance)
 	if instance == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	awsClient := ac.NewClient("us-east-1")
-	state, err := awsClient.GetInstanceState(instance.InternalId)
+	privateKey, err := awsClient.InjectKeyPair(instance.InternalId)
 	if err != nil {
+		fmt.Println("*****", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	if state == "pending" {
-		instance.LastOperation.State = "in progress"
-		instance.LastOperation.Description = "creating service instance..."
-	} else if state == "running" {
-		instance.LastOperation.State = "succeeded"
-		instance.LastOperation.Description = "successfully created service instance"
-	} else {
-		instance.LastOperation.State = "failed"
-		instance.LastOperation.Description = "failed to create service instance"
+	credential := module.Credential{
+		PrivateKey: privateKey,
 	}
 
-	w.WriteHeader(http.StatusOK)
-	response := module.CreateServiceInstanceResponse{
-		DashboardUrl:  "http://dashbaord_url",
-		LastOperation: instance.LastOperation,
+	response := module.CreateServiceBindingResponse{
+		Credentials: credential,
 	}
-
+	fmt.Println("******", privateKey)
+	w.WriteHeader(http.StatusCreated)
 	data, _ := json.Marshal(response)
+	fmt.Println("-----", string(data))
 	fmt.Fprintf(w, string(data))
 }
 
