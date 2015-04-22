@@ -1,7 +1,10 @@
 package aws_client
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"path"
 	"strconv"
 
 	"github.com/awslabs/aws-sdk-go/aws"
@@ -12,19 +15,20 @@ import (
 )
 
 const (
-	AMI_ID            = "ami-dc5e75b4" //"ami-ecb68a84"
-	SECURITY_GROUP_ID = "sg-b23aead6"
-	SUBNET_ID         = "subnet-0c75a427"
-	KEY_NAME          = "mykey1"
-	INSTANCE_TYPE     = "t2.micro"
-	LINUX_USER        = "ubuntu"
-	PRIVATE_KEY_PATH  = "/Users/huazhang/.ssh/id_rsa"
+	AMI_ID                = "ami-dc5e75b4" //"ami-ecb68a84"
+	SECURITY_GROUP_ID     = "sg-b23aead6"
+	SUBNET_ID             = "subnet-0c75a427"
+	KEYPAIR_NAME          = "broker_keypair"
+	INSTANCE_TYPE         = "t2.micro"
+	LINUX_USER            = "ubuntu"
+	KEYPAIR_DIR_NAME      = ".gsb"
+	PIRVATE_KEY_FILE_NAME = "broker_id_rsa"
+	PUBLIC_KEY_FILE_NAME  = "broker_id_rsa.pub"
 )
 
 type Client interface {
 	CreateInstance() (string, error)
 	GetInstanceState(instanceId string) (string, error)
-	CreateKeyPair(keyName string) (string, error)
 	InjectKeyPair(instanceId string) (string, error)
 }
 
@@ -58,16 +62,35 @@ func (c *AWSClient) GetInstanceState(instanceId string) (string, error) {
 	return state, nil
 }
 
-func (c *AWSClient) CreateKeyPair(keyName string) (string, error) {
-	keypairInput := &ec2.CreateKeyPairInput{
-		KeyName: aws.String(keyName),
+func (c *AWSClient) setupKeyPair() error {
+	private_key_file := path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME, PIRVATE_KEY_FILE_NAME)
+
+	if !utils.Exists(private_key_file) {
+		keypairInput := &ec2.CreateKeyPairInput{
+			KeyName: aws.String(KEYPAIR_NAME),
+		}
+
+		keypairOutput, err := c.EC2Client.CreateKeyPair(keypairInput)
+		if err != nil {
+			return err
+		}
+
+		key_dir := path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME)
+		if _, err := os.Stat(key_dir); os.IsNotExist(err) {
+			err = os.Mkdir(key_dir, 0700)
+			if err != nil {
+				return errors.New("failed to create local keypair directory")
+			}
+		}
+
+		key_data, _ := strconv.Unquote(awsutil.StringValue(keypairOutput.KeyMaterial))
+		err = utils.WriteFile(private_key_file, []byte(key_data))
+		if err != nil {
+			return errors.New("failed to save private key file")
+		}
 	}
 
-	keypairOutput, err := c.EC2Client.CreateKeyPair(keypairInput)
-	if err != nil {
-		return "", err
-	}
-	return awsutil.StringValue(keypairOutput), nil
+	return nil
 }
 
 func (c *AWSClient) InjectKeyPair(instanceId string) (string, error) {
@@ -83,7 +106,7 @@ func (c *AWSClient) InjectKeyPair(instanceId string) (string, error) {
 	}
 
 	ip, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Reservations[0].Instances[0].PublicIPAddress))
-	pemBytes, err := utils.ReadFile(PRIVATE_KEY_PATH)
+	pemBytes, err := utils.ReadFile(path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME, PIRVATE_KEY_FILE_NAME))
 	if err != nil {
 		return "", err
 	}
@@ -94,10 +117,10 @@ func (c *AWSClient) InjectKeyPair(instanceId string) (string, error) {
 	}
 
 	command := `rm -f ./broker_id_rsa ./broker_id_rsa.pub
-	ssh-keygen -q -t rsa -N ""  -f ./broker_id_rsa
-	cat ./broker_id_rsa.pub >> .ssh/authorized_keys
-	cat ./broker_id_rsa
-	`
+		ssh-keygen -q -t rsa -N ""  -f ./broker_id_rsa
+		cat ./broker_id_rsa.pub >> .ssh/authorized_keys
+		cat ./broker_id_rsa`
+
 	privateKey, err := awsSShClient.ExecCommand(command)
 	if err != nil {
 		return "", err
@@ -107,6 +130,11 @@ func (c *AWSClient) InjectKeyPair(instanceId string) (string, error) {
 }
 
 func (c *AWSClient) createInstance(imageId string) (string, error) {
+	err := c.setupKeyPair()
+	if err != nil {
+		return "", err
+	}
+
 	instanceInput := &ec2.RunInstancesInput{
 		ImageID:  aws.String(imageId), // Required
 		MaxCount: aws.Long(1),         // Required
@@ -139,7 +167,7 @@ func (c *AWSClient) createInstance(imageId string) (string, error) {
 		// InstanceInitiatedShutdownBehavior: aws.String("ShutdownBehavior"),
 		InstanceType: aws.String(INSTANCE_TYPE),
 		// KernelID:                          aws.String("String"),
-		KeyName: aws.String(KEY_NAME),
+		KeyName: aws.String(KEYPAIR_NAME),
 		// Monitoring: &ec2.RunInstancesMonitoringEnabled{
 		// 	Enabled: aws.Boolean(true), // Required
 		// },
