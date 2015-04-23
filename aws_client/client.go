@@ -30,6 +30,7 @@ type Client interface {
 	CreateInstance() (string, error)
 	GetInstanceState(instanceId string) (string, error)
 	InjectKeyPair(instanceId string) (string, error)
+	DeleteInstance(instanceId string) error
 }
 
 type AWSClient struct {
@@ -218,4 +219,20 @@ func (c *AWSClient) createInstance(imageId string) (string, error) {
 	instanceId, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Instances[0].InstanceID))
 
 	return instanceId, nil
+}
+
+func (c *AWSClient) DeleteInstance(instanceId string) error {
+	terminateInstanceInput := &ec2.TerminateInstancesInput{
+		// One or more instance IDs.
+		InstanceIDs: []*string{
+			aws.String(instanceId), // Required
+		},
+	}
+
+	_, err := c.EC2Client.TerminateInstances(terminateInstanceInput)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
