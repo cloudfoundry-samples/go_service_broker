@@ -1,50 +1,27 @@
 package main
 
 import (
-	// "fmt"
-	//"time"
+	"flag"
 
-	// aws "github.com/awslabs/aws-sdk-go/aws"
-	// ac "github.com/xingzhou/go_service_broker/aws_client"
-	. "github.com/xingzhou/go_service_broker/web_server"
+	conf "github.com/xingzhou/go_service_broker/config"
+	util "github.com/xingzhou/go_service_broker/utils"
+	webs "github.com/xingzhou/go_service_broker/web_server"
 )
 
 func main() {
-	server := CreateServer()
+	// Step0. Get Config Path
+	defaultConfigPath := util.GetPath([]string{"assets", "config.json"})
+	configPath := flag.String("c", defaultConfigPath, "use '-c' option to specify the config file path")
 
-	// client := ac.NewClient("us-east-1")
+	// Step1. Load configuration
+	_, err := conf.LoadConfig(*configPath)
+	if err != nil {
+		panic("Error loading config file...")
+	}
 
-	// instanceId, err := client.CreateInstance()
-	// handleAWSError("CreateInstance", instanceId, err)
-	// instanceId := "i-e3e0de34"
-	// privateKey, err := client.InjectKeyPair(instanceId)
-	// handleAWSError("InjectKeyPair", privateKey, err)
-	// handleAWSError("CreateKeyPair", publicKey, err)
+	// Step2. Load data
 
-	// handleAWSError("CreateInstance", instanceId, err)
-	// for {
-	// 	state, err := client.GetInstanceState(instanceId)
-	// 	handleAWSError("GetInstanceStatus", state, err)
-	// 	if state == "running" {
-	// 		break
-	// 	}
-	// 	time.Sleep(time.Duration(1) * time.Second)
-	// }
-
-	// output, err := client.CreateKeyPair("mykey1")
-	// handleAWSError("CreateKeyPair", output, err)
-
+	// Step3. Start Server
+	server := webs.CreateServer()
 	server.Start()
 }
-
-// func handleAWSError(operation string, output string, err error) {
-// 	if awserr := aws.Error(err); awserr != nil {
-// 		// A service error occurred.
-// 		fmt.Println("Error:", awserr.Code, awserr.Message)
-// 	} else if err != nil {
-// 		// A non-service error occurred.
-// 		panic(err)
-// 	}
-// 	fmt.Sprintln("Output of %s:", operation)
-// 	fmt.Println(output)
-// }
