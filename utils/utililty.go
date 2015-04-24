@@ -21,6 +21,15 @@ func ReadFile(path string) (content []byte, err error) {
 	return
 }
 
+func WriteFile(path string, content []byte) error {
+	err := ioutil.WriteFile(path, content, 0700)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func GetPath(paths []string) string {
 	workDirectory, _ := os.Getwd()
 
@@ -36,4 +45,11 @@ func GetPath(paths []string) string {
 	}
 
 	return resultPath
+}
+
+func Exists(path string) bool {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
