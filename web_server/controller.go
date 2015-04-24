@@ -85,6 +85,8 @@ func (c *Controller) CreateServiceInstance(w http.ResponseWriter, r *http.Reques
 		LastOperation: &lastOperation,
 	}
 
+	utils.MarshalAndRecord(c.InstanceMap, conf.DataPath, conf.ServiceInstancesFileName)
+
 	data, _ := json.Marshal(response)
 	fmt.Fprintf(w, string(data))
 }

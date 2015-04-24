@@ -4,7 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/xingzhou/go_service_broker/config"
 	"github.com/xingzhou/go_service_broker/module"
+	"github.com/xingzhou/go_service_broker/utils"
+)
+
+var (
+	conf = config.GetConfig()
 )
 
 type Server struct {
@@ -12,9 +18,12 @@ type Server struct {
 }
 
 func CreateServer() *Server {
+	var serviceInstancesMap map[string]*module.ServiceInstance
+	utils.ReadAndUnmarshal(&serviceInstancesMap, conf.DataPath, conf.ServiceInstancesFileName)
+
 	return &Server{
 		controller: &Controller{
-			InstanceMap: make(map[string]*module.ServiceInstance),
+			InstanceMap: serviceInstancesMap,
 			KeyMap:      make(map[string]*module.ServiceKey),
 		},
 	}

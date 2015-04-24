@@ -1,3 +1,4 @@
 {
-	"data_path": "~/Work/Projects/go_service_broker/data"
+	"data_path": "/Users/dongdong/Work/Projects/go_service_broker/data",
+	"service_instances_file_name": "ServiceInstances"
 }

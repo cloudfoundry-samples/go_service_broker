@@ -1,9 +1,38 @@
 package utils
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"os"
 )
+
+func ReadAndUnmarshal(object interface{}, dir string, fileName string) error {
+	path := dir + string(os.PathSeparator) + fileName
+
+	bytes, err := ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(bytes, object)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func MarshalAndRecord(object interface{}, dir string, fileName string) error {
+	MkDir(dir)
+	path := dir + string(os.PathSeparator) + fileName
+
+	bytes, err := json.Marshal(object)
+	if err != nil {
+		return err
+	}
+
+	return WriteFile(path, bytes)
+}
 
 func ReadFile(path string) (content []byte, err error) {
 	file, err := os.Open(path)
