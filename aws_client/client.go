@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/awslabs/aws-sdk-go/aws"
 	"github.com/awslabs/aws-sdk-go/aws/awsutil"
@@ -31,6 +32,7 @@ type Client interface {
 	GetInstanceState(instanceId string) (string, error)
 	InjectKeyPair(instanceId string) (string, error)
 	DeleteInstance(instanceId string) error
+	RevokeKeyPair(instanceId string, privateKey string) error
 }
 
 type AWSClient struct {
@@ -233,6 +235,46 @@ func (c *AWSClient) DeleteInstance(instanceId string) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (c *AWSClient) RevokeKeyPair(instanceId string, privateKey string) error {
+	instanceInput := &ec2.DescribeInstancesInput{
+		InstanceIDs: []*string{
+			aws.String(instanceId),
+		},
+	}
+
+	instanceOutput, err := c.EC2Client.DescribeInstances(instanceInput)
+	if err != nil {
+		return err
+	}
+
+	ip, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Reservations[0].Instances[0].PublicIPAddress))
+	pemBytes, err := utils.ReadFile(path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME, PIRVATE_KEY_FILE_NAME))
+	if err != nil {
+		return err
+	}
+
+	awsSShClient, err := utils.GetSshClient(LINUX_USER, pemBytes, ip)
+	if err != nil {
+		return err
+	}
+
+	publicKey, err := utils.GeneratePublicKey([]byte(privateKey))
+	if err != nil {
+		return err
+	}
+
+	escapedPublicKey := strings.Replace(publicKey, "/", "\\/", -1)
+	command := fmt.Sprintf("sed '/%s/d' -i ~/.ssh/authorized_keys && echo 'revoked the public key: %s'", escapedPublicKey, publicKey)
+
+	result, err := awsSShClient.ExecCommand(command)
+	if err != nil {
+		return err
+	}
+	fmt.Println(result)
 
 	return nil
 }
