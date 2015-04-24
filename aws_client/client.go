@@ -18,7 +18,7 @@ const (
 	KEY_NAME          = "mykey1"
 	INSTANCE_TYPE     = "t2.micro"
 	LINUX_USER        = "ubuntu"
-	PRIVATE_KEY_PATH  = "/Users/huazhang/.ssh/id_rsa"
+	PRIVATE_KEY_PATH  = "/Users/dongdong/.ssh/id_rsa"
 )
 
 type Client interface {
