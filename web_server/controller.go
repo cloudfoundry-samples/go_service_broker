@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	ac "github.com/xingzhou/go_service_broker/aws_client"
+	be "github.com/xingzhou/go_service_broker/errors"
 	"github.com/xingzhou/go_service_broker/module"
 	"github.com/xingzhou/go_service_broker/utils"
 )
@@ -129,19 +130,40 @@ func (c *Controller) GetServiceInstance(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *Controller) RemoveServiceInstance(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	serviceInstanceGuid := vars["service_instance_guid"]
 
+	instance := c.InstanceMap[serviceInstanceGuid]
+	if instance == nil {
+		w.WriteHeader(http.StatusGone)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+
+	awsClient := ac.NewClient("us-east-1")
+	err := awsClient.DeleteInstance(instance.InternalId)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, be.NewBrokerError(err).ToJson())
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "{}")
 }
 
 func (c *Controller) Bind(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	serviceInstanceGuid := vars["service_instance_guid"]
-	// keyId := vars["binding_id"]
+	keyId := vars["service_binding_guid"]
+
 	instance := c.InstanceMap[serviceInstanceGuid]
 	fmt.Println("*****", instance)
 	if instance == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+
 	awsClient := ac.NewClient("us-east-1")
 	privateKey, err := awsClient.InjectKeyPair(instance.InternalId)
 	if err != nil {
@@ -157,6 +179,15 @@ func (c *Controller) Bind(w http.ResponseWriter, r *http.Request) {
 	response := module.CreateServiceBindingResponse{
 		Credentials: credential,
 	}
+
+	c.KeyMap[keyId] = &module.ServiceKey{
+		Id:                keyId,
+		ServiceId:         instance.ServiceId,
+		ServicePlanId:     instance.PlanId,
+		PrivateKey:        privateKey,
+		ServiceInstanceId: instance.Id,
+	}
+
 	fmt.Println("******", privateKey)
 	w.WriteHeader(http.StatusCreated)
 	data, _ := json.Marshal(response)
@@ -165,5 +196,26 @@ func (c *Controller) Bind(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) UnBind(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	serviceInstanceGuid := vars["service_instance_guid"]
+	keyId := vars["service_binding_guid"]
 
+	instance := c.InstanceMap[serviceInstanceGuid]
+	if instance == nil {
+		w.WriteHeader(http.StatusGone)
+		fmt.Fprintf(w, "{}")
+		return
+	}
+
+	awsClient := ac.NewClient("us-east-1")
+	err := awsClient.RevokeKeyPair(instance.InternalId, c.KeyMap[keyId].PrivateKey)
+	if err != nil {
+		fmt.Println("*****", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, be.NewBrokerError(err).ToJson())
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "{}")
 }
