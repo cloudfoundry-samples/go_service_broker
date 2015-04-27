@@ -79,11 +79,8 @@ func (c *AWSClient) setupKeyPair() error {
 		}
 
 		key_dir := path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME)
-		if _, err := os.Stat(key_dir); os.IsNotExist(err) {
-			err = os.Mkdir(key_dir, 0700)
-			if err != nil {
-				return errors.New("failed to create local keypair directory")
-			}
+		if !utils.MkDir(key_dir) {
+			return errors.New("failed to create local keypair directory")
 		}
 
 		key_data, _ := strconv.Unquote(awsutil.StringValue(keypairOutput.KeyMaterial))
