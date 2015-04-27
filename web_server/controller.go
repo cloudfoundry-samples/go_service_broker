@@ -148,6 +148,9 @@ func (c *Controller) RemoveServiceInstance(w http.ResponseWriter, r *http.Reques
 		fmt.Fprintf(w, be.NewBrokerError(err).ToJson())
 	}
 
+	delete(c.InstanceMap, serviceInstanceGuid)
+	utils.MarshalAndRecord(c.InstanceMap, conf.DataPath, conf.ServiceInstancesFileName)
+
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "{}")
 }
@@ -215,6 +218,9 @@ func (c *Controller) UnBind(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, be.NewBrokerError(err).ToJson())
 		return
 	}
+
+	delete(c.KeyMap, keyId)
+	utils.MarshalAndRecord(c.KeyMap, conf.DataPath, conf.ServiceKeysFileName)
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "{}")

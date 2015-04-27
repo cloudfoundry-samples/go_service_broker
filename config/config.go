@@ -9,6 +9,7 @@ import (
 type Config struct {
 	DataPath                 string `json:"data_path"`
 	ServiceInstancesFileName string `json:"service_instances_file_name"`
+	ServiceKeysFileName      string `json:"service_keys_file_name"`
 }
 
 var (

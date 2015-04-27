@@ -19,12 +19,15 @@ type Server struct {
 
 func CreateServer() *Server {
 	var serviceInstancesMap map[string]*module.ServiceInstance
+	var keyMap map[string]*module.ServiceKey
+
 	utils.ReadAndUnmarshal(&serviceInstancesMap, conf.DataPath, conf.ServiceInstancesFileName)
+	utils.ReadAndUnmarshal(&keyMap, conf.DataPath, conf.ServiceKeysFileName)
 
 	return &Server{
 		controller: &Controller{
 			InstanceMap: serviceInstancesMap,
-			KeyMap:      make(map[string]*module.ServiceKey),
+			KeyMap:      keyMap,
 		},
 	}
 }
