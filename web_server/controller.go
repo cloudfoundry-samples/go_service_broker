@@ -24,10 +24,11 @@ type Controller struct {
 }
 
 func (c *Controller) Catalog(w http.ResponseWriter, r *http.Request) {
-	templatePath := utils.GetPath([]string{"config", "catalog.json"})
+	templatePath := utils.GetPath([]string{"assets", "catalog.json"})
 
 	bytes, err := utils.ReadFile(templatePath)
 	if err != nil {
+		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -36,6 +37,7 @@ func (c *Controller) Catalog(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(bytes, &catalog)
 	if err != nil {
+		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -56,6 +58,7 @@ func (c *Controller) CreateServiceInstance(w http.ResponseWriter, r *http.Reques
 	var instance module.ServiceInstance
 	err := json.Unmarshal(body, &instance)
 	if err != nil {
+		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -63,6 +66,7 @@ func (c *Controller) CreateServiceInstance(w http.ResponseWriter, r *http.Reques
 	awsClient := ac.NewClient("us-east-1")
 	vmId, err := awsClient.CreateInstance()
 	if err != nil {
+		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
