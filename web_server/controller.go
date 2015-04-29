@@ -92,7 +92,7 @@ func (c *Controller) CreateServiceInstance(w http.ResponseWriter, r *http.Reques
 
 	err = utils.MarshalAndRecord(c.InstanceMap, conf.DataPath, conf.ServiceInstancesFileName)
 	if err != nil {
-		fmt.Println("save to file failed: ", err)
+		fmt.Println(be.NewSaveDataError("ServiceInstances", err))
 	}
 
 	data, _ := json.Marshal(response)
@@ -157,6 +157,9 @@ func (c *Controller) RemoveServiceInstance(w http.ResponseWriter, r *http.Reques
 
 	delete(c.InstanceMap, serviceInstanceGuid)
 	utils.MarshalAndRecord(c.InstanceMap, conf.DataPath, conf.ServiceInstancesFileName)
+	if err != nil {
+		fmt.Println(be.NewSaveDataError("ServiceInstances", err))
+	}
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "{}")
@@ -200,7 +203,7 @@ func (c *Controller) Bind(w http.ResponseWriter, r *http.Request) {
 
 	err = utils.MarshalAndRecord(c.KeyMap, conf.DataPath, conf.ServiceKeysFileName)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(be.NewSaveDataError("ServiceKeys", err))
 	}
 
 	fmt.Println("******", privateKey)
@@ -235,7 +238,7 @@ func (c *Controller) UnBind(w http.ResponseWriter, r *http.Request) {
 
 	err = utils.MarshalAndRecord(c.KeyMap, conf.DataPath, conf.ServiceKeysFileName)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(be.NewSaveDataError("ServiceKeys", err))
 	}
 
 	w.WriteHeader(http.StatusOK)
