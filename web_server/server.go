@@ -35,6 +35,9 @@ func CreateServer() *Server {
 		keyMap = make(map[string]*module.ServiceKey)
 	}
 
+	var serviceKeysMap map[string]*module.ServiceKey
+	utils.ReadAndUnmarshal(&serviceKeysMap, conf.DataPath, conf.ServiceKeysFileName)
+
 	return &Server{
 		controller: &Controller{
 			InstanceMap: serviceInstancesMap,
