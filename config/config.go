@@ -7,9 +7,11 @@ import (
 )
 
 type Config struct {
+	Port                     string `json:"port"`
 	DataPath                 string `json:"data_path"`
+	CatalogPath              string `json:"catalog_path"`
 	ServiceInstancesFileName string `json:"service_instances_file_name"`
-	ServiceKeysFileName      string `json:"service_keys_file_name"`
+	ServiceBindingsFileName  string `json:"service_bindings_file_name"`
 }
 
 var (

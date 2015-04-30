@@ -1,16 +1,12 @@
 package web_server
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	ac "github.com/xingzhou/go_service_broker/aws_client"
-	be "github.com/xingzhou/go_service_broker/errors"
-	"github.com/xingzhou/go_service_broker/module"
+
+	"github.com/xingzhou/go_service_broker/model"
 	"github.com/xingzhou/go_service_broker/utils"
 )
 
@@ -19,97 +15,84 @@ const (
 )
 
 type Controller struct {
-	InstanceMap map[string]*module.ServiceInstance
-	KeyMap      map[string]*module.ServiceKey
+	serviceClient ac.Client
+
+	instanceMap map[string]*model.ServiceInstance
+	bindingMap  map[string]*model.ServiceBinding
+}
+
+func CreateController(instanceMap map[string]*model.ServiceInstance, bindingMap map[string]*model.ServiceBinding) *Controller {
+	return &Controller{
+		instanceMap:   instanceMap,
+		bindingMap:    bindingMap,
+		serviceClient: ac.NewClient("us-east-1"),
+	}
 }
 
 func (c *Controller) Catalog(w http.ResponseWriter, r *http.Request) {
-	templatePath := utils.GetPath([]string{"assets", "catalog.json"})
+	fmt.Println("Get Service Broker Catalog...")
 
-	bytes, err := utils.ReadFile(templatePath)
+	var catalog model.Catalog
+	err := utils.ReadAndUnmarshal(catalog, conf.CatalogPath, "catalog.json")
 	if err != nil {
-		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	var catalog module.Catalog
-
-	err = json.Unmarshal(bytes, &catalog)
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	data, _ := json.Marshal(catalog)
-
-	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, string(data))
+	utils.WriteResponse(w, http.StatusOK, catalog)
 }
 
 func (c *Controller) CreateServiceInstance(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+	fmt.Println("Create Service Instance...")
 
-	serviceInstanceGuid := vars["service_instance_guid"]
-	body, _ := ioutil.ReadAll(r.Body)
+	var instance model.ServiceInstance
 
-	var instance module.ServiceInstance
-	err := json.Unmarshal(body, &instance)
+	err := utils.ProvisionDataFromRequest(r, &instance)
 	if err != nil {
-		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	awsClient := ac.NewClient("us-east-1")
-	vmId, err := awsClient.CreateInstance()
+	instanceId, err := c.serviceClient.CreateInstance()
 	if err != nil {
-		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	instance.InternalId = vmId
-	instance.Id = serviceInstanceGuid
-
-	lastOperation := module.LastOperation{
+	instance.InternalId = instanceId
+	instance.DashboardUrl = "http://dashbaord_url"
+	instance.Id = utils.ExtractVarsFromRequest(r, "service_instance_guid")
+	instance.LastOperation = &model.LastOperation{
 		State:                    "in progress",
 		Description:              "creating service instance...",
 		AsyncPollIntervalSeconds: DEFAULT_POLLING_INTERVAL_SECONDS,
 	}
 
-	instance.LastOperation = &lastOperation
-
-	c.InstanceMap[instance.Id] = &instance
-
-	w.WriteHeader(http.StatusOK)
-	response := module.CreateServiceInstanceResponse{
-		DashboardUrl:  "http://dashbaord_url",
-		LastOperation: &lastOperation,
-	}
-
-	err = utils.MarshalAndRecord(c.InstanceMap, conf.DataPath, conf.ServiceInstancesFileName)
+	c.instanceMap[instance.Id] = &instance
+	err = utils.MarshalAndRecord(c.instanceMap, conf.DataPath, conf.ServiceInstancesFileName)
 	if err != nil {
-		fmt.Println(be.NewSaveDataError("ServiceInstances", err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	data, _ := json.Marshal(response)
-	fmt.Fprintf(w, string(data))
+	response := model.CreateServiceInstanceResponse{
+		DashboardUrl:  instance.DashboardUrl,
+		LastOperation: instance.LastOperation,
+	}
+	utils.WriteResponse(w, http.StatusAccepted, response)
 }
 
 func (c *Controller) GetServiceInstance(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	serviceInstanceGuid := vars["service_instance_guid"]
-	instance := c.InstanceMap[serviceInstanceGuid]
+	fmt.Println("Get Service Instance State....")
 
+	instanceId := utils.ExtractVarsFromRequest(r, "service_instance_guid")
+	instance := c.instanceMap[instanceId]
 	if instance == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	awsClient := ac.NewClient("us-east-1")
-	state, err := awsClient.GetInstanceState(instance.InternalId)
+
+	state, err := c.serviceClient.GetInstanceState(instance.InternalId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -126,121 +109,106 @@ func (c *Controller) GetServiceInstance(w http.ResponseWriter, r *http.Request) 
 		instance.LastOperation.Description = "failed to create service instance"
 	}
 
-	w.WriteHeader(http.StatusOK)
-	response := module.CreateServiceInstanceResponse{
-		DashboardUrl:  "http://dashbaord_url",
+	response := model.CreateServiceInstanceResponse{
+		DashboardUrl:  instance.DashboardUrl,
 		LastOperation: instance.LastOperation,
 	}
-
-	data, _ := json.Marshal(response)
-	fmt.Fprintf(w, string(data))
+	utils.WriteResponse(w, http.StatusOK, response)
 }
 
 func (c *Controller) RemoveServiceInstance(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	serviceInstanceGuid := vars["service_instance_guid"]
+	fmt.Println("Remove Service Instance...")
 
-	instance := c.InstanceMap[serviceInstanceGuid]
+	instanceId := utils.ExtractVarsFromRequest(r, "service_instance_guid")
+	instance := c.instanceMap[instanceId]
 	if instance == nil {
 		w.WriteHeader(http.StatusGone)
-		fmt.Fprintf(w, "{}")
 		return
 	}
 
-	awsClient := ac.NewClient("us-east-1")
-	err := awsClient.DeleteInstance(instance.InternalId)
+	err := c.serviceClient.DeleteInstance(instance.InternalId)
 	if err != nil {
-		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, be.NewBrokerError(err).ToJson())
+		return
 	}
 
-	delete(c.InstanceMap, serviceInstanceGuid)
-	utils.MarshalAndRecord(c.InstanceMap, conf.DataPath, conf.ServiceInstancesFileName)
+	delete(c.instanceMap, instanceId)
+	utils.MarshalAndRecord(c.instanceMap, conf.DataPath, conf.ServiceInstancesFileName)
 	if err != nil {
-		fmt.Println(be.NewSaveDataError("ServiceInstances", err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "{}")
+	utils.WriteResponse(w, http.StatusOK, "{}")
 }
 
 func (c *Controller) Bind(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	serviceInstanceGuid := vars["service_instance_guid"]
-	keyId := vars["service_binding_guid"]
+	fmt.Println("Bind Service Instance...")
 
-	instance := c.InstanceMap[serviceInstanceGuid]
-	fmt.Println("*****", instance)
+	bindingId := utils.ExtractVarsFromRequest(r, "service_binding_guid")
+	instanceId := utils.ExtractVarsFromRequest(r, "service_instance_guid")
+
+	instance := c.instanceMap[instanceId]
 	if instance == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	awsClient := ac.NewClient("us-east-1")
-	privateKey, err := awsClient.InjectKeyPair(instance.InternalId)
+	privateKey, err := c.serviceClient.InjectKeyPair(instance.InternalId)
 	if err != nil {
-		fmt.Println("*****", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	credential := module.Credential{
+	credential := model.Credential{
+		UserName:   ac.LINUX_USER,
 		PrivateKey: privateKey,
 	}
 
-	response := module.CreateServiceBindingResponse{
+	response := model.CreateServiceBindingResponse{
 		Credentials: credential,
 	}
 
-	c.KeyMap[keyId] = &module.ServiceKey{
-		Id:                keyId,
+	c.bindingMap[bindingId] = &model.ServiceBinding{
+		Id:                bindingId,
 		ServiceId:         instance.ServiceId,
 		ServicePlanId:     instance.PlanId,
 		PrivateKey:        privateKey,
 		ServiceInstanceId: instance.Id,
 	}
 
-	err = utils.MarshalAndRecord(c.KeyMap, conf.DataPath, conf.ServiceKeysFileName)
+	err = utils.MarshalAndRecord(c.bindingMap, conf.DataPath, conf.ServiceBindingsFileName)
 	if err != nil {
-		fmt.Println(be.NewSaveDataError("ServiceKeys", err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	fmt.Println("******", privateKey)
-	w.WriteHeader(http.StatusCreated)
-	data, _ := json.Marshal(response)
-	fmt.Println("-----", string(data))
-	fmt.Fprintf(w, string(data))
+	utils.WriteResponse(w, http.StatusCreated, response)
 }
 
 func (c *Controller) UnBind(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	serviceInstanceGuid := vars["service_instance_guid"]
-	keyId := vars["service_binding_guid"]
+	fmt.Println("Unbind Service Instance...")
 
-	instance := c.InstanceMap[serviceInstanceGuid]
+	bindingId := utils.ExtractVarsFromRequest(r, "service_binding_guid")
+	instanceId := utils.ExtractVarsFromRequest(r, "service_instance_guid")
+	instance := c.instanceMap[instanceId]
 	if instance == nil {
 		w.WriteHeader(http.StatusGone)
-		fmt.Fprintf(w, "{}")
 		return
 	}
 
-	awsClient := ac.NewClient("us-east-1")
-	err := awsClient.RevokeKeyPair(instance.InternalId, c.KeyMap[keyId].PrivateKey)
+	err := c.serviceClient.RevokeKeyPair(instance.InternalId, c.bindingMap[bindingId].PrivateKey)
 	if err != nil {
-		fmt.Println("*****", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, be.NewBrokerError(err).ToJson())
 		return
 	}
 
-	delete(c.KeyMap, keyId)
-
-	err = utils.MarshalAndRecord(c.KeyMap, conf.DataPath, conf.ServiceKeysFileName)
+	delete(c.bindingMap, bindingId)
+	err = utils.MarshalAndRecord(c.bindingMap, conf.DataPath, conf.ServiceBindingsFileName)
 	if err != nil {
-		fmt.Println(be.NewSaveDataError("ServiceKeys", err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "{}")
+	utils.WriteResponse(w, http.StatusOK, "{}")
 }

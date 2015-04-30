@@ -1,7 +1,9 @@
 {
-	
+	"port": "8001",
+
 	"data_path": "/Users/dongdong/Work/Projects/go_service_broker/data",
+	"catalog_path": "/Users/dongdong/Work/Projects/go_service_broker/config",
 
 	"service_instances_file_name": "ServiceInstances.json",
-	"service_keys_file_name": "ServiceKeys.json"
+	"service_bindings_file_name": "ServiceBindings.json"
 }

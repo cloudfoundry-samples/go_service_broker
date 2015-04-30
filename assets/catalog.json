@@ -1,22 +1,22 @@
 {
   "services": [
     {
-      "name": "fake-service",
-      "id": "fake-service-guid",
-      "description": "fake service",
+      "name": "AWS",
+      "id": "aws-service-guid",
+      "description": "Provides the aws VM service, including VM creation, key pair injection",
       "requires": [],
       "tags": [],
       "bindable": true,
       "metadata": {
         "provider": {
-          "name": "The name"
+          "name": "IBM"
         },
         "listing": {
           "imageUrl": "http://catgifpage.com/cat.gif",
           "blurb": "fake broker that is fake",
-          "longDescription": "A long time ago, in a galaxy far far away..."
+          "longDescription": "Provides the aws VM service, including VM creation, key pair injection"
         },
-        "displayName": "The Fake Broker"
+        "displayName": "AWS Service"
       },
       "dashboard_client": {
         "id": "<sso-test>",
@@ -26,18 +26,27 @@
       "plan_updateable": true,
       "plans": [
         {
-          "name": "fake-plan",
-          "id": "fake-plan-guid",
-          "description": "abc",
+          "name": "micro",
+          "id": "micro-plan-guid",
+          "description": "stands for 't2.micro' type VM",
           "metadata": {
             "cost": 0,
             "bullets": []
           }
         },
         {
-          "name": "fake-async-plan",
-          "id": "fake-async-plan-guid",
-          "description": "abc",
+          "name": "small",
+          "id": "small-plan-guid",
+          "description": "stands for 't2.small' type VM",
+          "metadata": {
+            "cost": 0,
+            "bullets": []
+          }
+        },
+        {
+          "name": "medium",
+          "id": "medium-plan-guid",
+          "description": "stands for 't2.medium' type VM",
           "metadata": {
             "cost": 0,
             "bullets": []

@@ -1,6 +1,6 @@
-package module
+package model
 
-type ServiceKey struct {
+type ServiceBinding struct {
 	Id                string
 	ServiceId         string
 	AppId             string
@@ -15,5 +15,6 @@ type CreateServiceBindingResponse struct {
 }
 
 type Credential struct {
+	UserName   string `json:"username"`
 	PrivateKey string `json:"private_key"`
 }
