@@ -33,7 +33,7 @@ func (c *Controller) Catalog(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Get Service Broker Catalog...")
 
 	var catalog model.Catalog
-	err := utils.ReadAndUnmarshal(catalog, conf.CatalogPath, "catalog.json")
+	err := utils.ReadAndUnmarshal(&catalog, conf.CatalogPath, "catalog.json")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

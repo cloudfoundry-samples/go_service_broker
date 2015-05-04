@@ -10,6 +10,8 @@ type ServiceInstance struct {
 	SpaceGuid        string `json:"space_guid"`
 
 	LastOperation *LastOperation `json:"last_operation, omitempty"`
+
+	Parameters interface{} `json:"parameters, omitempty"`
 }
 
 type LastOperation struct {
