@@ -53,7 +53,7 @@ func (c *Controller) CreateServiceInstance(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	instanceId, err := c.serviceClient.CreateInstance()
+	instanceId, err := c.serviceClient.CreateInstance(instance.Parameters)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

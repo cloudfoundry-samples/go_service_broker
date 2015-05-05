@@ -28,7 +28,7 @@ const (
 )
 
 type Client interface {
-	CreateInstance() (string, error)
+	CreateInstance(parameters interface{}) (string, error)
 	GetInstanceState(instanceId string) (string, error)
 	InjectKeyPair(instanceId string) (string, error)
 	DeleteInstance(instanceId string) error
@@ -45,8 +45,18 @@ func NewClient(region string) *AWSClient {
 	}
 }
 
-func (c *AWSClient) CreateInstance() (string, error) {
-	return c.createInstance(AMI_ID)
+func (c *AWSClient) CreateInstance(parameters interface{}) (string, error) {
+	var amiId string
+
+	switch parameters.(type) {
+	case map[string]interface{}:
+		param := parameters.(map[string]interface{})
+		amiId = param["ami_id"].(string)
+	default:
+		amiId = AMI_ID
+	}
+
+	return c.createInstance(amiId)
 }
 
 func (c *AWSClient) GetInstanceState(instanceId string) (string, error) {
