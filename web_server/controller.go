@@ -139,6 +139,12 @@ func (c *Controller) RemoveServiceInstance(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	err = c.deleteAssociatedBindings(instanceId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	utils.WriteResponse(w, http.StatusOK, "{}")
 }
 
@@ -212,4 +218,14 @@ func (c *Controller) UnBind(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteResponse(w, http.StatusOK, "{}")
+}
+
+func (c *Controller) deleteAssociatedBindings(instanceId string) error {
+	for id, binding := range c.bindingMap {
+		if binding.ServiceInstanceId == instanceId {
+			delete(c.bindingMap, id)
+		}
+	}
+
+	return utils.MarshalAndRecord(c.bindingMap, conf.DataPath, conf.ServiceBindingsFileName)
 }
