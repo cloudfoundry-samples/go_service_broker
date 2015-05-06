@@ -15,6 +15,7 @@ type CreateServiceBindingResponse struct {
 }
 
 type Credential struct {
+	PublicIP   string `json:"public_ip"`
 	UserName   string `json:"username"`
 	PrivateKey string `json:"private_key"`
 }

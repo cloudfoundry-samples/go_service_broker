@@ -30,7 +30,7 @@ const (
 type Client interface {
 	CreateInstance(parameters interface{}) (string, error)
 	GetInstanceState(instanceId string) (string, error)
-	InjectKeyPair(instanceId string) (string, error)
+	InjectKeyPair(instanceId string) (string, string, string, error)
 	DeleteInstance(instanceId string) error
 	RevokeKeyPair(instanceId string, privateKey string) error
 }
@@ -108,7 +108,7 @@ func (c *AWSClient) setupKeyPair() error {
 	return nil
 }
 
-func (c *AWSClient) InjectKeyPair(instanceId string) (string, error) {
+func (c *AWSClient) InjectKeyPair(instanceId string) (string, string, string, error) {
 	instanceInput := &ec2.DescribeInstancesInput{
 		InstanceIDs: []*string{
 			aws.String(instanceId), // Required
@@ -117,18 +117,18 @@ func (c *AWSClient) InjectKeyPair(instanceId string) (string, error) {
 
 	instanceOutput, err := c.EC2Client.DescribeInstances(instanceInput)
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
 	ip, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Reservations[0].Instances[0].PublicIPAddress))
 	pemBytes, err := utils.ReadFile(path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME, PIRVATE_KEY_FILE_NAME))
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
 	awsSShClient, err := utils.GetSshClient(LINUX_USER, pemBytes, ip)
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
 	command := `rm -f ./broker_id_rsa ./broker_id_rsa.pub
@@ -138,10 +138,10 @@ func (c *AWSClient) InjectKeyPair(instanceId string) (string, error) {
 
 	privateKey, err := awsSShClient.ExecCommand(command)
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
-	return privateKey, nil
+	return ip, LINUX_USER, privateKey, nil
 }
 
 func (c *AWSClient) createInstance(imageId string) (string, error) {

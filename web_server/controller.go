@@ -154,14 +154,15 @@ func (c *Controller) Bind(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	privateKey, err := c.serviceClient.InjectKeyPair(instance.InternalId)
+	ip, userName, privateKey, err := c.serviceClient.InjectKeyPair(instance.InternalId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	credential := model.Credential{
-		UserName:   ac.LINUX_USER,
+		PublicIP:   ip,
+		UserName:   userName,
 		PrivateKey: privateKey,
 	}
 
