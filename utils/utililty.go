@@ -30,7 +30,7 @@ func MarshalAndRecord(object interface{}, dir string, fileName string) error {
 	MkDir(dir)
 	path := dir + string(os.PathSeparator) + fileName
 
-	bytes, err := json.Marshal(object)
+	bytes, err := json.MarshalIndent(object, "", " ")
 	if err != nil {
 		return err
 	}
