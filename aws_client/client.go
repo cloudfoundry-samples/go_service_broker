@@ -51,7 +51,12 @@ func (c *AWSClient) CreateInstance(parameters interface{}) (string, error) {
 	switch parameters.(type) {
 	case map[string]interface{}:
 		param := parameters.(map[string]interface{})
-		amiId = param["ami_id"].(string)
+		if param["ami_id"] != nil {
+			amiId = param["ami_id"].(string)
+		} else {
+			amiId = AMI_ID
+		}
+
 	default:
 		amiId = AMI_ID
 	}
