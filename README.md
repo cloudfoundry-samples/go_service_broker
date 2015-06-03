@@ -6,16 +6,27 @@ This is a service broker written in Go Language for Cloud Foundry.
 Getting Started
 ===============
 * Clone the git repository and setup go environment, make sure `$GOPATH` is correctly setup.
+
 * Install `godeps`: 
 
 ```
 $ go get github.com/tools/godep
 ```
 
-* Save the dependencies:
+* Build godep
+
+$ cd ../../tools/godep/
+$ go build
+$ export PATH=$PATH:$GOPATH/bin
+
+* Download and install packages with dependencies by using godep.
+$ cd -
+$ godep get ./...
+
+* Save the dependencies by godep.
 
 ```
-$ godep save
+$ godep save ./...
 ```
 
 * Build your executable `out/broker`
@@ -23,6 +34,12 @@ $ godep save
 ```
 bin/build
 ```
+
+* Before running the service broker, you need to configure your AWS credentials. As a best practice, we recommend creating an IAM user that has access keys rather than relying on root access keys. You can login into your AWS account to create a new user 'service_broker' with the option to generate an access key for this user. Once you get a Access Key ID and Secret Access Key, copy and save it into ~/.aws/credentials file, which might look like:
+
+[default]
+aws_access_key_id = AKID1234567890
+aws_secret_access_key = MY-SECRET-KEY
 
 * Run the executable to start the service broker which will listening on port `8001` by default
 
