@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	ac "github.com/xingzhou/go_service_broker/aws_client"
+	ac "github.com/cloudfoundry-samples/go_service_broker/aws_client"
 
-	"github.com/xingzhou/go_service_broker/model"
-	"github.com/xingzhou/go_service_broker/utils"
+	"github.com/cloudfoundry-samples/go_service_broker/model"
+	"github.com/cloudfoundry-samples/go_service_broker/utils"
 )
 
 const (

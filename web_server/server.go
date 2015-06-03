@@ -7,9 +7,9 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/xingzhou/go_service_broker/config"
-	"github.com/xingzhou/go_service_broker/model"
-	"github.com/xingzhou/go_service_broker/utils"
+	"github.com/cloudfoundry-samples/go_service_broker/config"
+	"github.com/cloudfoundry-samples/go_service_broker/model"
+	"github.com/cloudfoundry-samples/go_service_broker/utils"
 )
 
 var (

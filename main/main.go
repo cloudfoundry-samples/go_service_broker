@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 
-	conf "github.com/xingzhou/go_service_broker/config"
-	utils "github.com/xingzhou/go_service_broker/utils"
-	webs "github.com/xingzhou/go_service_broker/web_server"
+	conf "github.com/cloudfoundry-samples/go_service_broker/config"
+	utils "github.com/cloudfoundry-samples/go_service_broker/utils"
+	webs "github.com/cloudfoundry-samples/go_service_broker/web_server"
 )
 
 func main() {

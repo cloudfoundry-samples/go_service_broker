@@ -33,4 +33,4 @@ out/broker
 
 License
 =======
-This is under [Apache 2.0 OSS license](https://github.com/xingzhou/go_service_broker/LICENSE).
+This is under [Apache 2.0 OSS license](https://github.com/cloudfoundry-samples/go_service_broker/LICENSE).

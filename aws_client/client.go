@@ -12,7 +12,7 @@ import (
 	"github.com/awslabs/aws-sdk-go/aws/awsutil"
 	"github.com/awslabs/aws-sdk-go/service/ec2"
 
-	"github.com/xingzhou/go_service_broker/utils"
+	"github.com/cloudfoundry-samples/go_service_broker/utils"
 )
 
 const (
