@@ -2,7 +2,7 @@
 	"port": "8001",
 
 	"data_path": "data",
-	"catalog_path": "config",
+	"catalog_path": "data",
 
 	"service_instances_file_name": "ServiceInstances.json",
 	"service_bindings_file_name": "ServiceBindings.json"
