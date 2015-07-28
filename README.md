@@ -10,9 +10,9 @@ This is a service broker written in Go Language for Cloud Foundry.
 This sample project has been presented in CF Summit 2015. Please refer to the presentation and demo videos on youtube:
 
 * [Presentation on CloudFoundry Summit 2015](https://www.youtube.com/watch?v=MrSy4iZZPZE)
-* [Service Async Demo](https://www.youtube.com/watch?v=Ij5KSKrAq9Q)
-* [Service Key Demo](https://www.youtube.com/watch?v=V5uzLcPQPmo)
-* [Service Arbitrary Parameters Demo](https://www.youtube.com/watch?v=Qc3bZljGscs)
+* [Service Async Demo video](https://www.youtube.com/watch?v=Ij5KSKrAq9Q)
+* [Service Key Demo video](https://www.youtube.com/watch?v=V5uzLcPQPmo)
+* [Service Arbitrary Parameters Demo video](https://www.youtube.com/watch?v=Qc3bZljGscs)
 
 Getting Started
 ===============
