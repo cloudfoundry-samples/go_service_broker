@@ -7,12 +7,19 @@ This is a service broker written in Go Language for Cloud Foundry.
 * The service broker also support service key feature which means application is not required when binding a service instance. The credentials of the service instance will be created.
 * In this implementation, service bind operation will generate a keypair and inject the public key into that EC2 instance and return the corresponding credentials including private key, user name and public IP address information which can be used to ssh login that EC2 instance. The service unbind operation will revoke that public key from the EC2 instance.
 
-This sample project has been presented in CF Summit 2015. Please refer to the presentation and demo videos on youtube:
+This sample project has been presented in CF Summit 2015:
 
 * [Presentation on CloudFoundry Summit 2015](https://www.youtube.com/watch?v=MrSy4iZZPZE)
+
+Videos for each of the main features of the brokers are in these Youtube videos:
+
 * [Service Async Demo video](https://www.youtube.com/watch?v=Ij5KSKrAq9Q)
 * [Service Key Demo video](https://www.youtube.com/watch?v=V5uzLcPQPmo)
 * [Service Arbitrary Parameters Demo video](https://www.youtube.com/watch?v=Qc3bZljGscs)
+
+The following blog post on IBM's OpenTech web site covers the broker in much details:
+
+* [CloudFoundry Services Keys and Sample Go Service Broker](https://developer.ibm.com/opentech/2015/07/09/cloudfoundry-services-keys-and-sample-go-service-broker/)
 
 Getting Started
 ===============
