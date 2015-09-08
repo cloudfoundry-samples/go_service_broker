@@ -1,12 +1,12 @@
 package model
 
 type ServiceBinding struct {
-	Id                string
-	ServiceId         string
-	AppId             string
-	ServicePlanId     string
-	PrivateKey        string
-	ServiceInstanceId string
+	Id                string `json:"id"`
+	ServiceId         string `json:"service_id"`
+	AppId             string `json:"app_id"`
+	ServicePlanId     string `json:"service_plan_id"`
+	PrivateKey        string `json:"private_key"`
+	ServiceInstanceId string `json:"service_instance_id"`
 }
 
 type CreateServiceBindingResponse struct {
