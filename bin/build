@@ -4,4 +4,4 @@ set -e
 
 bin=$(dirname $0)
 
-go build -o $bin/../out/broker github.com/cloudfoundry-samples/go_service_broker/main
+go build -o $bin/../out/broker github.com/cloudfoundry-samples/go_service_broker
