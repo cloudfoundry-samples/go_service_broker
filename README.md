@@ -66,6 +66,16 @@ aws_access_key_id = AKID1234567890
 aws_secret_access_key = MY-SECRET-KEY
 ```
 
+For instance executing this at the shell prompt:
+
+```bash
+cat > ~/.aws/credentials <<EOF
+[default]
+aws_access_key_id = AKID1234567890
+aws_secret_access_key = MY-SECRET-KEY
+EOF
+```
+
 * Run the executable to start the service broker which will listening on port `8001` by default.
 
 ```
