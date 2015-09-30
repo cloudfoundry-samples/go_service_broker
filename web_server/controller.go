@@ -1,10 +1,12 @@
 package web_server
 
 import (
+	"os"
+	"errors"
 	"fmt"
 	"net/http"
 
-	ac "github.com/cloudfoundry-samples/go_service_broker/aws_client"
+	client "github.com/cloudfoundry-samples/go_service_broker/client"
 
 	"github.com/cloudfoundry-samples/go_service_broker/model"
 	"github.com/cloudfoundry-samples/go_service_broker/utils"
@@ -15,25 +17,41 @@ const (
 )
 
 type Controller struct {
-	serviceClient ac.Client
+	cloudName string
+	cloudClient client.Client
 
 	instanceMap map[string]*model.ServiceInstance
 	bindingMap  map[string]*model.ServiceBinding
 }
 
-func CreateController(instanceMap map[string]*model.ServiceInstance, bindingMap map[string]*model.ServiceBinding) *Controller {
-	return &Controller{
+func CreateController(cloudName string, instanceMap map[string]*model.ServiceInstance, bindingMap map[string]*model.ServiceBinding) (*Controller, error) {
+	cloudClient, err := createCloudClient(cloudName)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Could not create cloud: %s client, message: %s", cloudName, err.Error()))
+	}
+
+	return &Controller{		
+		cloudName: cloudName,
+		cloudClient: cloudClient,
+
 		instanceMap:   instanceMap,
 		bindingMap:    bindingMap,
-		serviceClient: ac.NewClient("us-east-1"),
-	}
+	}, nil
 }
 
 func (c *Controller) Catalog(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Get Service Broker Catalog...")
 
 	var catalog model.Catalog
-	err := utils.ReadAndUnmarshal(&catalog, conf.CatalogPath, "catalog.json")
+	catalogFileName := "catalog.json"
+
+	if c.cloudName == "AWS" {
+		catalogFileName = "catalog.AWS.json"
+	} else if c.cloudName == "SoftLayer" {
+		catalogFileName = "catalog.SoftLayer.json"
+	}
+
+	err := utils.ReadAndUnmarshal(&catalog, conf.CatalogPath, catalogFileName)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -53,7 +71,7 @@ func (c *Controller) CreateServiceInstance(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	instanceId, err := c.serviceClient.CreateInstance(instance.Parameters)
+	instanceId, err := c.cloudClient.CreateInstance(instance.Parameters)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -92,7 +110,7 @@ func (c *Controller) GetServiceInstance(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	state, err := c.serviceClient.GetInstanceState(instance.InternalId)
+	state, err := c.cloudClient.GetInstanceState(instance.InternalId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -126,7 +144,7 @@ func (c *Controller) RemoveServiceInstance(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err := c.serviceClient.DeleteInstance(instance.InternalId)
+	err := c.cloudClient.DeleteInstance(instance.InternalId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -160,7 +178,7 @@ func (c *Controller) Bind(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ip, userName, privateKey, err := c.serviceClient.InjectKeyPair(instance.InternalId)
+	ip, userName, privateKey, err := c.cloudClient.InjectKeyPair(instance.InternalId)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -204,7 +222,7 @@ func (c *Controller) UnBind(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := c.serviceClient.RevokeKeyPair(instance.InternalId, c.bindingMap[bindingId].PrivateKey)
+	err := c.cloudClient.RevokeKeyPair(instance.InternalId, c.bindingMap[bindingId].PrivateKey)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -220,6 +238,8 @@ func (c *Controller) UnBind(w http.ResponseWriter, r *http.Request) {
 	utils.WriteResponse(w, http.StatusOK, "{}")
 }
 
+// Private instance methods
+
 func (c *Controller) deleteAssociatedBindings(instanceId string) error {
 	for id, binding := range c.bindingMap {
 		if binding.ServiceInstanceId == instanceId {
@@ -228,4 +248,28 @@ func (c *Controller) deleteAssociatedBindings(instanceId string) error {
 	}
 
 	return utils.MarshalAndRecord(c.bindingMap, conf.DataPath, conf.ServiceBindingsFileName)
+}
+
+// Private methods
+
+func createCloudClient(cloudName string) (client.Client, error) {
+	switch cloudName {
+		case "AWS":
+			return client.NewAWSClient("us-east-1"), nil
+
+		case "SoftLayer":
+			username := os.Getenv("SL_USERNAME")
+			if username == "" {
+				return nil, errors.New(fmt.Sprintf("You must set environment variable SL_USERNAME for %s cloud", cloudName))
+			}
+
+			apiKey := os.Getenv("SL_API_KEY")
+			if apiKey == "" {
+				return nil, errors.New(fmt.Sprintf("You must set environment variable SL_API_KEY for %s cloud", cloudName))
+			}
+
+			return client.NewSoftLayerClient(username, apiKey), nil
+	}
+
+	return nil, errors.New(fmt.Sprintf("Invalid cloud name: %s", cloudName))
 }
