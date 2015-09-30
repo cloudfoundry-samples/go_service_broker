@@ -54,6 +54,11 @@ func (s *Server) Start() {
 
 	http.Handle("/", router)
 
+	cfPort := os.Getenv("PORT")
+	if cfPort != "" {
+		conf.Port = cfPort
+	}
+
 	fmt.Println("Server started, listening on port " + conf.Port + "...")
 	fmt.Println("CTL-C to break out of broker")
 	http.ListenAndServe(":"+conf.Port, nil)
