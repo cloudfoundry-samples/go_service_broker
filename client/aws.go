@@ -37,6 +37,23 @@ func NewAWSClient(region string) *AWSClient {
 	}
 }
 
+// state == pending, running, succeeded, failed
+func (c *AWSClient) GetInstanceState(instanceId string) (string, error) {
+	instanceInput := &ec2.DescribeInstancesInput{
+		InstanceIDs: []*string{
+			aws.String(instanceId), // Required
+		},
+	}
+
+	instanceOutput, err := c.EC2Client.DescribeInstances(instanceInput)
+	if err != nil {
+		return "", err
+	}
+
+	state, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Reservations[0].Instances[0].State.Name))
+	return state, nil
+}
+
 func (c *AWSClient) CreateInstance(parameters interface{}) (string, error) {
 	var amiId string
 
@@ -56,45 +73,17 @@ func (c *AWSClient) CreateInstance(parameters interface{}) (string, error) {
 	return c.createInstance(amiId)
 }
 
-func (c *AWSClient) GetInstanceState(instanceId string) (string, error) {
-	instanceInput := &ec2.DescribeInstancesInput{
+func (c *AWSClient) DeleteInstance(instanceId string) error {
+	terminateInstanceInput := &ec2.TerminateInstancesInput{
+		// One or more instance IDs.
 		InstanceIDs: []*string{
 			aws.String(instanceId), // Required
 		},
 	}
 
-	instanceOutput, err := c.EC2Client.DescribeInstances(instanceInput)
+	_, err := c.EC2Client.TerminateInstances(terminateInstanceInput)
 	if err != nil {
-		return "", err
-	}
-
-	state, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Reservations[0].Instances[0].State.Name))
-	return state, nil
-}
-
-func (c *AWSClient) setupKeyPair() error {
-	private_key_file := path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME, PIRVATE_KEY_FILE_NAME)
-
-	if !utils.Exists(private_key_file) {
-		keypairInput := &ec2.CreateKeyPairInput{
-			KeyName: aws.String(KEYPAIR_NAME),
-		}
-
-		keypairOutput, err := c.EC2Client.CreateKeyPair(keypairInput)
-		if err != nil {
-			return err
-		}
-
-		key_dir := path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME)
-		if !utils.MkDir(key_dir) {
-			return errors.New("failed to create local keypair directory")
-		}
-
-		key_data, _ := strconv.Unquote(awsutil.StringValue(keypairOutput.KeyMaterial))
-		err = utils.WriteFile(private_key_file, []byte(key_data))
-		if err != nil {
-			return errors.New("failed to save private key file")
-		}
+		return err
 	}
 
 	return nil
@@ -135,6 +124,48 @@ func (c *AWSClient) InjectKeyPair(instanceId string) (string, string, string, er
 
 	return ip, LINUX_USER, privateKey, nil
 }
+
+func (c *AWSClient) RevokeKeyPair(instanceId string, privateKey string) error {
+	instanceInput := &ec2.DescribeInstancesInput{
+		InstanceIDs: []*string{
+			aws.String(instanceId),
+		},
+	}
+
+	instanceOutput, err := c.EC2Client.DescribeInstances(instanceInput)
+	if err != nil {
+		return err
+	}
+
+	ip, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Reservations[0].Instances[0].PublicIPAddress))
+	pemBytes, err := utils.ReadFile(path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME, PIRVATE_KEY_FILE_NAME))
+	if err != nil {
+		return err
+	}
+
+	awsSShClient, err := utils.GetSshClient(LINUX_USER, pemBytes, ip)
+	if err != nil {
+		return err
+	}
+
+	publicKey, err := utils.GeneratePublicKey([]byte(privateKey))
+	if err != nil {
+		return err
+	}
+
+	escapedPublicKey := strings.Replace(publicKey, "/", "\\/", -1)
+	command := fmt.Sprintf("sed '/%s/d' -i ~/.ssh/authorized_keys && echo 'revoked the public key: %s'", escapedPublicKey, publicKey)
+
+	result, err := awsSShClient.ExecCommand(command)
+	if err != nil {
+		return err
+	}
+	fmt.Println(result)
+
+	return nil
+}
+
+// Private methods
 
 func (c *AWSClient) createInstance(imageId string) (string, error) {
 	err := c.setupKeyPair()
@@ -227,58 +258,30 @@ func (c *AWSClient) createInstance(imageId string) (string, error) {
 	return instanceId, nil
 }
 
-func (c *AWSClient) DeleteInstance(instanceId string) error {
-	terminateInstanceInput := &ec2.TerminateInstancesInput{
-		// One or more instance IDs.
-		InstanceIDs: []*string{
-			aws.String(instanceId), // Required
-		},
+func (c *AWSClient) setupKeyPair() error {
+	private_key_file := path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME, PIRVATE_KEY_FILE_NAME)
+
+	if !utils.Exists(private_key_file) {
+		keypairInput := &ec2.CreateKeyPairInput{
+			KeyName: aws.String(KEYPAIR_NAME),
+		}
+
+		keypairOutput, err := c.EC2Client.CreateKeyPair(keypairInput)
+		if err != nil {
+			return err
+		}
+
+		key_dir := path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME)
+		if !utils.MkDir(key_dir) {
+			return errors.New("failed to create local keypair directory")
+		}
+
+		key_data, _ := strconv.Unquote(awsutil.StringValue(keypairOutput.KeyMaterial))
+		err = utils.WriteFile(private_key_file, []byte(key_data))
+		if err != nil {
+			return errors.New("failed to save private key file")
+		}
 	}
-
-	_, err := c.EC2Client.TerminateInstances(terminateInstanceInput)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *AWSClient) RevokeKeyPair(instanceId string, privateKey string) error {
-	instanceInput := &ec2.DescribeInstancesInput{
-		InstanceIDs: []*string{
-			aws.String(instanceId),
-		},
-	}
-
-	instanceOutput, err := c.EC2Client.DescribeInstances(instanceInput)
-	if err != nil {
-		return err
-	}
-
-	ip, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Reservations[0].Instances[0].PublicIPAddress))
-	pemBytes, err := utils.ReadFile(path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME, PIRVATE_KEY_FILE_NAME))
-	if err != nil {
-		return err
-	}
-
-	awsSShClient, err := utils.GetSshClient(LINUX_USER, pemBytes, ip)
-	if err != nil {
-		return err
-	}
-
-	publicKey, err := utils.GeneratePublicKey([]byte(privateKey))
-	if err != nil {
-		return err
-	}
-
-	escapedPublicKey := strings.Replace(publicKey, "/", "\\/", -1)
-	command := fmt.Sprintf("sed '/%s/d' -i ~/.ssh/authorized_keys && echo 'revoked the public key: %s'", escapedPublicKey, publicKey)
-
-	result, err := awsSShClient.ExecCommand(command)
-	if err != nil {
-		return err
-	}
-	fmt.Println(result)
 
 	return nil
 }
