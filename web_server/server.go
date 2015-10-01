@@ -1,9 +1,10 @@
 package web_server
 
 import (
+	"os"
 	"fmt"
 	"net/http"
-	"os"
+	"errors"
 
 	"github.com/gorilla/mux"
 
@@ -20,8 +21,25 @@ type Server struct {
 	controller *Controller
 }
 
-func CreateServer() *Server {
-	return &Server{controller: CreateController(loadServiceInstances(), loadServiceBindings())}
+func CreateServer(cloudName string) (*Server, error) {
+	serviceInstances, err := loadServiceInstances()
+	if err != nil {
+		return nil, err
+	}
+
+	serviceBindings, err := loadServiceBindings()
+	if err != nil {
+		return nil, err
+	}
+
+	controller, err := CreateController(cloudName, serviceInstances, serviceBindings)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Server{
+		controller: controller,
+	}, nil
 }
 
 func (s *Server) Start() {
@@ -36,31 +54,45 @@ func (s *Server) Start() {
 
 	http.Handle("/", router)
 
+	cfPort := os.Getenv("PORT")
+	if cfPort != "" {
+		conf.Port = cfPort
+	}
+
 	fmt.Println("Server started, listening on port " + conf.Port + "...")
+	fmt.Println("CTL-C to break out of broker")
 	http.ListenAndServe(":"+conf.Port, nil)
 }
 
 // private methods
-func loadServiceInstances() map[string]*model.ServiceInstance {
+func loadServiceInstances() (map[string]*model.ServiceInstance, error) {
 	var serviceInstancesMap map[string]*model.ServiceInstance
 
 	err := utils.ReadAndUnmarshal(&serviceInstancesMap, conf.DataPath, conf.ServiceInstancesFileName)
-	if err != nil && os.IsNotExist(err) {
-		fmt.Printf("WARNING: service instance data file '%s' does not exist: \n", conf.ServiceInstancesFileName)
-		serviceInstancesMap = make(map[string]*model.ServiceInstance)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Printf("WARNING: service instance data file '%s' does not exist: \n", conf.ServiceInstancesFileName)
+			serviceInstancesMap = make(map[string]*model.ServiceInstance)
+		} else {
+			return nil, errors.New(fmt.Sprintf("Could not load the service instances, message: %s", err.Error()))
+		}
 	}
 
-	return serviceInstancesMap
+	return serviceInstancesMap, nil
 }
 
-func loadServiceBindings() map[string]*model.ServiceBinding {
+func loadServiceBindings() (map[string]*model.ServiceBinding, error) {
 	var bindingMap map[string]*model.ServiceBinding
 
 	err := utils.ReadAndUnmarshal(&bindingMap, conf.DataPath, conf.ServiceBindingsFileName)
 	if err != nil {
-		fmt.Printf("WARNING: key map data file '%s' does not exist: \n", conf.ServiceBindingsFileName)
-		bindingMap = make(map[string]*model.ServiceBinding)
+		if os.IsNotExist(err) {
+			fmt.Printf("WARNING: key map data file '%s' does not exist: \n", conf.ServiceBindingsFileName)
+			bindingMap = make(map[string]*model.ServiceBinding)
+		} else {
+			return nil, errors.New(fmt.Sprintf("Could not load the service instances, message: %s", err.Error()))
+		}
 	}
 
-	return bindingMap
+	return bindingMap, nil
 }

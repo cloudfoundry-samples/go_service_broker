@@ -1,0 +1,58 @@
+{
+  "services": [
+    {
+      "name": "AWS",
+      "id": "aws-service-guid",
+      "description": "Provides the aws VM service, including VM creation, key pair injection",
+      "requires": [],
+      "tags": [],
+      "bindable": true,
+      "metadata": {
+        "provider": {
+          "name": "IBM"
+        },
+        "listing": {
+          "imageUrl": "http://catgifpage.com/cat.gif",
+          "blurb": "fake broker that is fake",
+          "longDescription": "Provides the aws VM service, including VM creation, key pair injection"
+        },
+        "displayName": "AWS Service"
+      },
+      "dashboard_client": {
+        "id": "<sso-test>",
+        "secret": "<sso-secret>",
+        "redirect_uri": "http://aws.com"
+      },
+      "plan_updateable": true,
+      "plans": [
+        {
+          "name": "micro",
+          "id": "micro-plan-guid",
+          "description": "stands for 't2.micro' type VM",
+          "metadata": {
+            "cost": 0,
+            "bullets": []
+          }
+        },
+        {
+          "name": "small",
+          "id": "small-plan-guid",
+          "description": "stands for 't2.small' type VM",
+          "metadata": {
+            "cost": 0,
+            "bullets": []
+          }
+        },
+        {
+          "name": "medium",
+          "id": "medium-plan-guid",
+          "description": "stands for 't2.medium' type VM",
+          "metadata": {
+            "cost": 0,
+            "bullets": []
+          }
+        }
+      ]
+    }
+  ]
+}
