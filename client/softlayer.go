@@ -1,7 +1,9 @@
 package client
 
 import (
+	"os"
 	"fmt"
+	"errors"
 	"strconv"
 
 	softlayer "github.com/maximilien/softlayer-go/softlayer"
@@ -19,45 +21,17 @@ type virtualGuestProps struct {
 }
 
 type SoftLayerClient struct {
-	username string
-	apiKey string
-
-	client softlayer.Client
-
 	vgProps virtualGuestProps
 }
 
-func NewSoftLayerClient(username string, apiKey string) *SoftLayerClient {
+func NewSoftLayerClient() *SoftLayerClient {
 	fmt.Println("NewSoftLayerClient ready!")
 
 	defatultProps := defaultVirtualGuestProperties()
-	
-	client := slclient.NewSoftLayerClient(username, apiKey)
 
 	return &SoftLayerClient{
-		username: username,
-		apiKey: apiKey,
-
-		client: client,
-
 		vgProps: defatultProps,		
 	}	
-}
-
-func (c *SoftLayerClient) CreateInstance(parameters interface{}) (string, error) {
-	virtualGuestTemplate := c.createVirtualGuestTemplate(parameters)
-
-	virtualGuestService, err := c.client.GetSoftLayer_Virtual_Guest_Service()
-	if err != nil {
-	  return "", err
-	}
-
-	virtualGuest, err := virtualGuestService.CreateObject(virtualGuestTemplate)
-	if err != nil {
-	    return "", err
-	}
-
-	return strconv.Itoa(virtualGuest.Id), nil
 }
 
 // state == pending, running, succeeded, failed
@@ -67,7 +41,12 @@ func (c *SoftLayerClient) GetInstanceState(instanceId string) (string, error) {
 		return "failed", err
 	}
 
-	virtualGuestService, err := c.client.GetSoftLayer_Virtual_Guest_Service()
+	client, err := c.createSoftLayerClient()
+	if err != nil {
+		return "", err
+	}
+
+	virtualGuestService, err := client.GetSoftLayer_Virtual_Guest_Service()
 	if err != nil {
 		return "failed", err
 	}
@@ -84,12 +63,53 @@ func (c *SoftLayerClient) GetInstanceState(instanceId string) (string, error) {
 	return "pending", nil
 }
 
-func (c *SoftLayerClient) InjectKeyPair(instanceId string) (string, string, string, error) {
-	return "", "", "", nil
+func (c *SoftLayerClient) CreateInstance(parameters interface{}) (string, error) {
+	virtualGuestTemplate := c.createVirtualGuestTemplate(parameters)
+
+	client, err := c.createSoftLayerClient()
+	if err != nil {
+		return "", err
+	}
+
+	virtualGuestService, err := client.GetSoftLayer_Virtual_Guest_Service()
+	if err != nil {
+	  return "", err
+	}
+
+	virtualGuest, err := virtualGuestService.CreateObject(virtualGuestTemplate)
+	if err != nil {
+	    return "", err
+	}
+
+	return strconv.Itoa(virtualGuest.Id), nil
 }
 
 func (c *SoftLayerClient) DeleteInstance(instanceId string) error {
+	vgId, err := strconv.Atoi(instanceId)
+	if err != nil {
+		return err
+	}
+
+	client, err := c.createSoftLayerClient()
+	if err != nil {
+		return err
+	}
+
+	virtualGuestService, err := client.GetSoftLayer_Virtual_Guest_Service()
+	if err != nil {
+		return err
+	}
+
+	_, err = virtualGuestService.DeleteObject(vgId)	
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (c *SoftLayerClient) InjectKeyPair(instanceId string) (string, string, string, error) {
+	return "", "", "", nil
 }
 
 func (c *SoftLayerClient) RevokeKeyPair(instanceId string, privateKey string) error {
@@ -112,6 +132,20 @@ func (c *SoftLayerClient) createVirtualGuestTemplate(parameters interface{}) dat
 	    LocalDiskFlag:                true,
 	    OperatingSystemReferenceCode: c.vgProps.operatingSystemReferenceCode,
 	}
+}
+
+func (c *SoftLayerClient) createSoftLayerClient() (softlayer.Client, error) {
+	username := os.Getenv("SL_USERNAME")
+	if username == "" {
+		return nil, errors.New("You must set environment variable SL_USERNAME for SoftLayer cloud")
+	}
+
+	apiKey := os.Getenv("SL_API_KEY")
+	if apiKey == "" {
+		return nil, errors.New("You must set environment variable SL_API_KEY for SoftLayer cloud")
+	}
+
+	return slclient.NewSoftLayerClient(username, apiKey), nil
 }
 
 // Private functions

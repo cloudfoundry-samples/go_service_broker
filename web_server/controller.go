@@ -1,7 +1,6 @@
 package web_server
 
 import (
-	"os"
 	"errors"
 	"fmt"
 	"net/http"
@@ -258,17 +257,7 @@ func createCloudClient(cloudName string) (client.Client, error) {
 			return client.NewAWSClient("us-east-1"), nil
 
 		case "SoftLayer":
-			username := os.Getenv("SL_USERNAME")
-			if username == "" {
-				return nil, errors.New(fmt.Sprintf("You must set environment variable SL_USERNAME for %s cloud", cloudName))
-			}
-
-			apiKey := os.Getenv("SL_API_KEY")
-			if apiKey == "" {
-				return nil, errors.New(fmt.Sprintf("You must set environment variable SL_API_KEY for %s cloud", cloudName))
-			}
-
-			return client.NewSoftLayerClient(username, apiKey), nil
+			return client.NewSoftLayerClient(), nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("Invalid cloud name: %s", cloudName))
