@@ -1,11 +1,16 @@
 go_service_broker
 =================
 
-This is a service broker written in Go Language for Cloud Foundry.
+This is a service broker written in Go Language for Cloud Foundry. This service broker supports creating VMs on AWS or SoftLayer. Since VMs take some to spin up creating them is done asynchronously. 
 
-* The service broker supports asynchronously creating EC2 instances with arbitrary parameters. The state of the instance (in progress/succeeded/failed) can be retrieved later.
-* The service broker also support service key feature which means application is not required when binding a service instance. The credentials of the service instance will be created.
-* In this implementation, service bind operation will generate a keypair and inject the public key into that EC2 instance and return the corresponding credentials including private key, user name and public IP address information which can be used to ssh login that EC2 instance. The service unbind operation will revoke that public key from the EC2 instance.
+This broker also supports creating service keys. This is a new feature added to the Service Broker v2.6 APIs. In this broker we implement service keys by creating SSH keys and adding them to the VM.
+
+Finally, this broker also supports arbitrary service parameters. For AWS this is done by allowing the user to pass the `ami-id` to use when spinning up the VM. And for SoftLayer you can specify the Virtual Guest Device Block Device Template Group ID.
+
+NOTE that for AWS, in this implementation, service bind operation will generate a keypair and inject the public key into that EC2 instance and return the corresponding credentials including private key, user name and public IP address information which can be used to ssh login that EC2 instance. The service unbind operation will revoke that public key from the EC2 instance.
+
+Presentations
+=============
 
 This sample project has been presented in CF Summit 2015:
 
@@ -62,7 +67,11 @@ $ bin/build
 Configuring for AWS
 -------------------
 
-* Before running the service broker, you need to configure your AWS credentials. As a best practice, we recommend creating an IAM user that has access keys rather than relying on root access keys. You can login into your AWS account to create a new user 'service_broker' with the option to generate an access key for this user. Once you get a Access Key ID and Secret Access Key, copy and save it into ~/.aws/credentials file, which might look like:
+Before running the service broker, you need to configure your AWS credentials. 
+
+As a best practice, we recommend creating an IAM user that has access keys rather than relying on root access keys. You can login into your AWS account to create a new user 'service_broker' with the option to generate an access key for this user. 
+
+Once you get a Access Key ID and Secret Access Key, copy and save it into ~/.aws/credentials file, which might look like:
 
 ```
 [default]
