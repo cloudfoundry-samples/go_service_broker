@@ -81,7 +81,7 @@ Save the dependencies by godep.
 $ godep save ./...
 ```
 
-Build your executable `out/broker`.
+Build your executable `out/go_service_broker`.
 
 ```
 $ bin/build
@@ -118,7 +118,7 @@ Locally
 Run the executable to start the service broker which will listening on port `8001` by default.
 
 ```
-$ out/broker
+$ out/go_service_broker
 ```
 
 In CF
