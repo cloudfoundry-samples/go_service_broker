@@ -1,6 +1,8 @@
 go_service_broker
 =================
 
+[![Join the chat at https://gitter.im/cloudfoundry-samples/go_service_broker](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/cloudfoundry-samples/go_service_broker?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 This is a service broker written in Go Language for Cloud Foundry. This service broker supports creating VMs on AWS or SoftLayer. Since VMs take some to spin up creating them is done asynchronously. 
 
 This broker also supports creating service keys. This is a new feature added to the Service Broker v2.6 APIs. In this broker we implement service keys by creating SSH keys and adding them to the VM.
