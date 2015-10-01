@@ -29,36 +29,59 @@ The following blog post on IBM's OpenTech web site covers the broker in much det
 Getting Started
 ===============
 
-* Clone the git repository and setup go environment, make sure `$GOPATH` is correctly setup.
+Get Latest Executable: go_service_broker
+----------------------------------------
 
-* Install `godep`.
+Assuming you have a valid [Golang 1.4.2](https://golang.org/dl/) or [later](https://golang.org/dl/) installed for your system, you can quickly build and get the latest `go_service_broker` executable by running the following `go` command:
+
+```
+$ go get github.com/cloudfoundry-samples/go_service_broker
+```
+
+This will build and place the `go_service_broker` executable built for your operating system in your `$GOPATH/bin` directory.
+
+
+Building From Source
+--------------------
+
+Clone this repo and build it. Using the following commands on a Linux or Mac OS X system:
+
+```
+$ mkdir -p go_service_broker/src/github.com/cloudfoundry-samples
+$ export GOPATH=$(pwd)/go_service_broker:$GOPATH
+$ cd go_service_broker/src/github.com/cloudfoundry-samples
+$ git clone https://github.com/cloudfoundry-samples/go_service_broker.git
+$ cd go_service_broker
+$ ./bin/build
+```
+
+NOTE: if you get any dependency errors, then use `go get path/to/dependency` to get it, e.g., `go get github.com/onsi/ginkgo` and `go get github.com/onsi/gomega`
+
+The executable output should now be located in: `out/go_service_broker`. Place it wherever you want, e.g., `/usr/local/bin` on Linux or Mac OS X.
+
+Dependencies
+------------
+
+Install `godep`.
 
 ```
 $ go get github.com/tools/godep
 ```
 
-* Build godep.
-
-```
-$ cd ../../tools/godep/
-$ go build
-$ export PATH=$PATH:$GOPATH/bin
-```
-
-* Download and install packages with dependencies by using godep.
+Download and install packages with dependencies by using godep.
 
 ```
 $ cd -
 $ godep get ./...
 ```
 
-* Save the dependencies by godep.
+Save the dependencies by godep.
 
 ```
 $ godep save ./...
 ```
 
-* Build your executable `out/broker`.
+Build your executable `out/broker`.
 
 ```
 $ bin/build
