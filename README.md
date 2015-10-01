@@ -1,7 +1,7 @@
+[![Join the chat at https://gitter.im/cloudfoundry-samples/go_service_broker](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/cloudfoundry-samples/go_service_broker?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 go_service_broker
 =================
-
-[![Join the chat at https://gitter.im/cloudfoundry-samples/go_service_broker](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/cloudfoundry-samples/go_service_broker?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This is a service broker written in Go Language for Cloud Foundry. This service broker supports creating VMs on AWS or SoftLayer. Since VMs take some to spin up creating them is done asynchronously. 
 
