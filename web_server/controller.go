@@ -6,9 +6,8 @@ import (
 	"net/http"
 
 	client "github.com/cloudfoundry-samples/go_service_broker/client"
-
-	"github.com/cloudfoundry-samples/go_service_broker/model"
-	"github.com/cloudfoundry-samples/go_service_broker/utils"
+	utils "github.com/cloudfoundry-samples/go_service_broker/utils"
+	model "github.com/cloudfoundry-samples/go_service_broker/model"
 )
 
 const (
@@ -44,9 +43,9 @@ func (c *Controller) Catalog(w http.ResponseWriter, r *http.Request) {
 	var catalog model.Catalog
 	catalogFileName := "catalog.json"
 
-	if c.cloudName == "AWS" {
+	if c.cloudName == utils.AWS {
 		catalogFileName = "catalog.AWS.json"
-	} else if c.cloudName == "SoftLayer" {
+	} else if c.cloudName == utils.SOFTLAYER || c.cloudName == utils.SL {
 		catalogFileName = "catalog.SoftLayer.json"
 	}
 
@@ -253,10 +252,10 @@ func (c *Controller) deleteAssociatedBindings(instanceId string) error {
 
 func createCloudClient(cloudName string) (client.Client, error) {
 	switch cloudName {
-		case "AWS":
+		case utils.AWS:
 			return client.NewAWSClient("us-east-1"), nil
 
-		case "SoftLayer":
+		case utils.SOFTLAYER, utils.SL:
 			return client.NewSoftLayerClient(), nil
 	}
 

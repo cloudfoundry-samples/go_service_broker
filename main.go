@@ -7,13 +7,8 @@ import (
 	"flag"
 
 	conf "github.com/cloudfoundry-samples/go_service_broker/config"
-	utils "github.com/cloudfoundry-samples/go_service_broker/utils"
 	webs "github.com/cloudfoundry-samples/go_service_broker/web_server"
-)
-
-const (
-	AWS = "AWS"
-	SOFTLAYER = "SoftLayer"
+	utils "github.com/cloudfoundry-samples/go_service_broker/utils"
 )
 
 type Options struct {
@@ -27,7 +22,7 @@ func init() {
 	defaultConfigPath := utils.GetPath([]string{"assets", "config.json"})
 	flag.StringVar(&options.ConfigPath, "c", defaultConfigPath, "use '-c' option to specify the config file path")
 
-	flag.StringVar(&options.Cloud, "cloud", AWS, "use '--cloud' option to specify the cloud client to use: AWS or SoftLayer")
+	flag.StringVar(&options.Cloud, "cloud", utils.AWS, "use '--cloud' option to specify the cloud client to use: AWS or SoftLayer (SL)")
 
 	flag.Parse()
 }
@@ -58,7 +53,7 @@ func checkCloudName(name string) error {
 	fmt.Println(name)
 
 	switch name {
-		case AWS, SOFTLAYER:
+		case utils.AWS, utils.SOFTLAYER, utils.SL:
 		return nil
 	}
 
