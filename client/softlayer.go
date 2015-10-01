@@ -112,7 +112,36 @@ func (c *SoftLayerClient) InjectKeyPair(instanceId string) (string, string, stri
 	return "", "", "", nil
 }
 
-func (c *SoftLayerClient) RevokeKeyPair(instanceId string, privateKey string) error {
+func (c *SoftLayerClient) RevokeKeyPair(instanceId string, privateKeyName string) error {
+	client, err := c.createSoftLayerClient()
+	if err != nil {
+		return err
+	}
+
+	vgId, err := strconv.Atoi(instanceId)
+	if err != nil {
+		return err
+	}
+
+	sshKey, err := c.findSshKey(vgId, privateKeyName)
+	if err != nil {
+		return err
+	}
+
+	sshKeyService, err := client.GetSoftLayer_Security_Ssh_Key_Service()
+	if err != nil {
+		return err
+	}
+
+	deleted, err := sshKeyService.DeleteObject(sshKey.Id)
+	if err != nil {
+		return err
+	}
+
+	if !deleted {
+		return errors.New(fmt.Sprintf("Could not delete ssh key with id: %d", sshKey.Id))
+	}
+
 	return nil
 }
 
@@ -146,6 +175,31 @@ func (c *SoftLayerClient) createSoftLayerClient() (softlayer.Client, error) {
 	}
 
 	return slclient.NewSoftLayerClient(username, apiKey), nil
+}
+
+func (c *SoftLayerClient) findSshKey(vgId int, keyName string) (datatypes.SoftLayer_Security_Ssh_Key, error) {
+	client, err := c.createSoftLayerClient()
+	if err != nil {
+		return datatypes.SoftLayer_Security_Ssh_Key{}, err
+	}
+
+	accountService, err := client.GetSoftLayer_Account_Service()
+	if err != nil {
+		return datatypes.SoftLayer_Security_Ssh_Key{}, err
+	}
+
+	sshKeys, err := accountService.GetSshKeys()
+	if err != nil {
+		return datatypes.SoftLayer_Security_Ssh_Key{}, err
+	}
+
+	for _, key := range sshKeys {
+		if key.Key == keyName {
+			return key, nil
+		}
+	}
+
+	return datatypes.SoftLayer_Security_Ssh_Key{}, errors.New(fmt.Sprintf("Could not find ssh key with name: %s", keyName))
 }
 
 // Private functions
