@@ -92,7 +92,7 @@ $ bin/build
 Configuring for AWS
 -------------------
 
-Before running the service broker, you need to configure your AWS credentials. 
+Before running the service broker, you need to configure your AWS accpunt's credentials. If you do not have AWS account, then you can get one for [free here](https://aws.amazon.com/free).
 
 As a best practice, we recommend creating an IAM user that has access keys rather than relying on root access keys. You can login into your AWS account to create a new user 'service_broker' with the option to generate an access key for this user. 
 
@@ -107,7 +107,16 @@ aws_secret_access_key = MY-SECRET-KEY
 Configuring for SoftLayer
 -------------------------
 
-TODO
+For SoftLayer the configuration requires you to supply your SL user name and API key. If you do not have an SL account, please get one for [free here](http://www.softlayer.com/promo/freeCloud/freecloud). The API key can be requested once you login to your account.
+
+You need to setup two environment variables with your SL credentials as follows.
+
+```
+export SL_USERNAME=<your-softlayer-username@your-company.com>
+export SL_API_KEY=<your-softlayer-api-key>
+```
+
+These two environment variables must exist where you run your broker. Locally, in a VM or server process, or whithin CloudFoundry. See below on details on how to run broker in CF or locally.
 
 Running Broker
 ==============
