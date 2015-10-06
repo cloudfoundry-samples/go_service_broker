@@ -96,12 +96,12 @@ Before running the service broker, you need to configure your AWS accpunt's cred
 
 As a best practice, we recommend creating an IAM user that has access keys rather than relying on root access keys. You can login into your AWS account to create a new user 'service_broker' with the option to generate an access key for this user. 
 
-Once you get a Access Key ID and Secret Access Key, copy and save it into ~/.aws/credentials file, which might look like:
+Once you get a Access Key ID and Secret Access Key, copy and save it into `~/.aws/credentials` file, which might look like:
 
 ```
 [default]
-aws_access_key_id = AKID1234567890
-aws_secret_access_key = MY-SECRET-KEY
+aws_access_key_id = YOUR-AWS-ACCESS-KEY-ID
+aws_secret_access_key = YOUR-AWS-SECRET-ACCESS-KEY
 ```
 
 Configuring for SoftLayer
@@ -112,8 +112,8 @@ For SoftLayer the configuration requires you to supply your SL user name and API
 You need to setup two environment variables with your SL credentials as follows.
 
 ```
-export SL_USERNAME=<your-softlayer-username@your-company.com>
-export SL_API_KEY=<your-softlayer-api-key>
+export SL_USERNAME=your-softlayer-username@your-company.com
+export SL_API_KEY=YOUR-SOFTLAYER-API-KEY
 ```
 
 These two environment variables must exist where you run your broker. Locally, in a VM or server process, or whithin CloudFoundry. See below on details on how to run broker in CF or locally.
