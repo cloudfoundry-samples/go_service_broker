@@ -54,10 +54,13 @@ $ export GOPATH=$(pwd)/go_service_broker:$GOPATH
 $ cd go_service_broker/src/github.com/cloudfoundry-samples
 $ git clone https://github.com/cloudfoundry-samples/go_service_broker.git
 $ cd go_service_broker
+$ godep restore
 $ ./bin/build
 ```
 
-NOTE: if you get any dependency errors, then use `go get path/to/dependency` to get it, e.g., `go get github.com/onsi/ginkgo` and `go get github.com/onsi/gomega`
+NOTE: you may need to install [godep](https://github.com/tools/godep) on your system, if you have not already. You can with this one line command: `$ go get github.com/tools/godep`
+
+NOTE2: if you get any dependency errors, then use `go get path/to/dependency` to get it, e.g., `go get github.com/onsi/ginkgo` and `go get github.com/onsi/gomega`
 
 The executable output should now be located in: `out/go_service_broker`. Place it wherever you want, e.g., `/usr/local/bin` on Linux or Mac OS X.
 
