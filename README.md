@@ -121,7 +121,7 @@ These two environment variables must exist where you run your broker. Locally, i
 Running Broker
 ==============
 
-TODO
+The broker can be ran in one of two modes: locally or as an app in a CF environment.
 
 Locally
 -------
@@ -129,13 +129,30 @@ Locally
 Run the executable to start the service broker which will listening on port `8001` by default.
 
 ```
-$ out/go_service_broker
+$ out/go_service_broker --cloud AWS
 ```
+
+This will run the broker in `AWS` mode. You can also specify `SoftLayer` mode with:
+
+```
+$ out/go_service_broker --cloud SoftLayer
+```
+
+If no argument is passed to the `--cloud` flag then AWS mode is assumed/
+
 
 In CF
 -----
 
-TODO
+When running the broker in a CF environment (including [BOSH lite](https://github.com/cloudfoundry/bosh-lite)). You simply need to:
+
+```
+$ git clone https://github.com/cloudfoundry-samples/go_service_broker.git
+$ cd go_service_broker
+$ cf push
+```
+
+You, of course, need to have the [CF CLI](https://github.com/cloudfoundry/cli) installed into your system. Also, you can edit the `Procfile` if you want to specify a different mode (AWS or SoftLayer) as well as any additional optional parameters to the CF Golang buildpacks.
 
 Using Broker
 ============
