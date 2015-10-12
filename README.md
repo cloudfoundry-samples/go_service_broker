@@ -115,8 +115,8 @@ For SoftLayer the configuration requires you to supply your SL user name and API
 You need to setup two environment variables with your SL credentials as follows.
 
 ```
-export SL_USERNAME=your-softlayer-username@your-company.com
-export SL_API_KEY=YOUR-SOFTLAYER-API-KEY
+$ export SL_USERNAME=your-softlayer-username@your-company.com
+$ export SL_API_KEY=YOUR-SOFTLAYER-API-KEY
 ```
 
 These two environment variables must exist where you run your broker. Locally, in a VM or server process, or whithin CloudFoundry. See below on details on how to run broker in CF or locally.
