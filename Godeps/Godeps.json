@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/cloudfoundry-samples/go_service_broker",
-	"GoVersion": "go1.3.3",
+	"GoVersion": "go1.4.2",
 	"Packages": [
 		"./..."
 	],
@@ -12,43 +12,43 @@
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/aws",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.9.14-3-g308eaa6",
+			"Rev": "308eaa65c0ddf03c701d511b7d73b3f3620452a1"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/endpoints",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.9.14-3-g308eaa6",
+			"Rev": "308eaa65c0ddf03c701d511b7d73b3f3620452a1"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/ec2query",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.9.14-3-g308eaa6",
+			"Rev": "308eaa65c0ddf03c701d511b7d73b3f3620452a1"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query/queryutil",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.9.14-3-g308eaa6",
+			"Rev": "308eaa65c0ddf03c701d511b7d73b3f3620452a1"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.9.14-3-g308eaa6",
+			"Rev": "308eaa65c0ddf03c701d511b7d73b3f3620452a1"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.9.14-3-g308eaa6",
+			"Rev": "308eaa65c0ddf03c701d511b7d73b3f3620452a1"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/internal/signer/v4",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.9.14-3-g308eaa6",
+			"Rev": "308eaa65c0ddf03c701d511b7d73b3f3620452a1"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/ec2",
-			"Comment": "v0.6.7-3-g2a6648c",
-			"Rev": "2a6648c479175ce005bca95780f948a196a46062"
+			"Comment": "v0.9.14-3-g308eaa6",
+			"Rev": "308eaa65c0ddf03c701d511b7d73b3f3620452a1"
 		},
 		{
 			"ImportPath": "github.com/gorilla/context",

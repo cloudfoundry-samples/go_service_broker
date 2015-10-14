@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
 	"github.com/cloudfoundry-samples/go_service_broker/utils"
@@ -33,14 +32,14 @@ type AWSClient struct {
 
 func NewAWSClient(region string) *AWSClient {
 	return &AWSClient{
-		EC2Client: ec2.New(&aws.Config{Region: region}),
+		EC2Client: ec2.New(&aws.Config{Region: &region}),
 	}
 }
 
 // state == pending, running, succeeded, failed
 func (c *AWSClient) GetInstanceState(instanceId string) (string, error) {
 	instanceInput := &ec2.DescribeInstancesInput{
-		InstanceIDs: []*string{
+		InstanceIds: []*string{
 			aws.String(instanceId), // Required
 		},
 	}
@@ -50,7 +49,7 @@ func (c *AWSClient) GetInstanceState(instanceId string) (string, error) {
 		return "", err
 	}
 
-	state, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Reservations[0].Instances[0].State.Name))
+	state, _ := strconv.Unquote(aws.StringValue(instanceOutput.Reservations[0].Instances[0].State.Name))
 	return state, nil
 }
 
@@ -76,7 +75,7 @@ func (c *AWSClient) CreateInstance(parameters interface{}) (string, error) {
 func (c *AWSClient) DeleteInstance(instanceId string) error {
 	terminateInstanceInput := &ec2.TerminateInstancesInput{
 		// One or more instance IDs.
-		InstanceIDs: []*string{
+		InstanceIds: []*string{
 			aws.String(instanceId), // Required
 		},
 	}
@@ -91,7 +90,7 @@ func (c *AWSClient) DeleteInstance(instanceId string) error {
 
 func (c *AWSClient) InjectKeyPair(instanceId string) (string, string, string, error) {
 	instanceInput := &ec2.DescribeInstancesInput{
-		InstanceIDs: []*string{
+		InstanceIds: []*string{
 			aws.String(instanceId), // Required
 		},
 	}
@@ -101,7 +100,7 @@ func (c *AWSClient) InjectKeyPair(instanceId string) (string, string, string, er
 		return "", "", "", err
 	}
 
-	ip, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Reservations[0].Instances[0].PublicIPAddress))
+	ip, _ := strconv.Unquote(aws.StringValue(instanceOutput.Reservations[0].Instances[0].PublicIpAddress))
 	pemBytes, err := utils.ReadFile(path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME, PIRVATE_KEY_FILE_NAME))
 	if err != nil {
 		return "", "", "", err
@@ -127,7 +126,7 @@ func (c *AWSClient) InjectKeyPair(instanceId string) (string, string, string, er
 
 func (c *AWSClient) RevokeKeyPair(instanceId string, privateKey string) error {
 	instanceInput := &ec2.DescribeInstancesInput{
-		InstanceIDs: []*string{
+		InstanceIds: []*string{
 			aws.String(instanceId),
 		},
 	}
@@ -137,7 +136,7 @@ func (c *AWSClient) RevokeKeyPair(instanceId string, privateKey string) error {
 		return err
 	}
 
-	ip, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Reservations[0].Instances[0].PublicIPAddress))
+	ip, _ := strconv.Unquote(aws.StringValue(instanceOutput.Reservations[0].Instances[0].PublicIpAddress))
 	pemBytes, err := utils.ReadFile(path.Join(os.Getenv("HOME"), KEYPAIR_DIR_NAME, PIRVATE_KEY_FILE_NAME))
 	if err != nil {
 		return err
@@ -174,9 +173,9 @@ func (c *AWSClient) createInstance(imageId string) (string, error) {
 	}
 
 	instanceInput := &ec2.RunInstancesInput{
-		ImageID:  aws.String(imageId), // Required
-		MaxCount: aws.Long(1),         // Required
-		MinCount: aws.Long(1),         // Required
+		ImageId:  aws.String(imageId),  // Required
+		MaxCount: aws.Int64(1),         // Required
+		MinCount: aws.Int64(1),         // Required
 		// AdditionalInfo: aws.String("String"),
 		// BlockDeviceMappings: []*ec2.BlockDeviceMapping{
 		// 	&ec2.BlockDeviceMapping{ // Required
@@ -240,11 +239,11 @@ func (c *AWSClient) createInstance(imageId string) (string, error) {
 		// },
 		// PrivateIPAddress: aws.String("String"),
 		// RAMDiskID:        aws.String("String"),
-		SecurityGroupIDs: []*string{
+		SecurityGroupIds: []*string{
 			aws.String(SECURITY_GROUP_ID), // Required
 			// More values...
 		},
-		SubnetID: aws.String(SUBNET_ID),
+		SubnetId: aws.String(SUBNET_ID),
 	}
 
 	instanceOutput, err := c.EC2Client.RunInstances(instanceInput)
@@ -252,8 +251,8 @@ func (c *AWSClient) createInstance(imageId string) (string, error) {
 		return "", err
 	}
 
-	fmt.Println(awsutil.StringValue(instanceOutput))
-	instanceId, _ := strconv.Unquote(awsutil.StringValue(instanceOutput.Instances[0].InstanceID))
+	fmt.Println(instanceOutput)
+	instanceId, _ := strconv.Unquote(aws.StringValue(instanceOutput.Instances[0].InstanceId))
 
 	return instanceId, nil
 }
@@ -276,7 +275,7 @@ func (c *AWSClient) setupKeyPair() error {
 			return errors.New("failed to create local keypair directory")
 		}
 
-		key_data, _ := strconv.Unquote(awsutil.StringValue(keypairOutput.KeyMaterial))
+		key_data, _ := strconv.Unquote(aws.StringValue(keypairOutput.KeyMaterial))
 		err = utils.WriteFile(private_key_file, []byte(key_data))
 		if err != nil {
 			return errors.New("failed to save private key file")
