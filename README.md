@@ -95,7 +95,7 @@ $ bin/build
 Configuring for AWS
 -------------------
 
-Before running the service broker, you need to configure your AWS accpunt's credentials. If you do not have AWS account, then you can get one for [free here](https://aws.amazon.com/free).
+Before running the service broker, you need to configure your AWS account's credentials. If you do not have AWS account, then you can get one for [free here](https://aws.amazon.com/free).
 
 As a best practice, we recommend creating an IAM user that has access keys rather than relying on root access keys. You can login into your AWS account to create a new user 'service_broker' with the option to generate an access key for this user. 
 
