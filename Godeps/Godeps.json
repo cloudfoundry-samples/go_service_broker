@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/cloudfoundry-samples/go_service_broker",
-	"GoVersion": "go1.4.2",
+	"GoVersion": "go1.8.1",
 	"Packages": [
 		"./..."
 	],
